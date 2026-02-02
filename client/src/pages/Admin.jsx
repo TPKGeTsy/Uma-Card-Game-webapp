@@ -19,44 +19,37 @@ function Admin() {
   });
 
   // 🏟️ State พิเศษสำหรับจัดการ Segments ของสนาม
-  const [segmentCount, setSegmentCount] = useState(1); // จำนวนจุดสำคัญ
+  const [segmentCount, setSegmentCount] = useState(1); 
   const [trackSegments, setTrackSegments] = useState([
-    { type: 'STRAIGHT', distance: 1000 } // ค่าเริ่มต้น 1 จุด
+    { type: 'STRAIGHT', distance: 1000 }
   ]);
 
-  // ฟังก์ชันปรับจำนวน Segment (เมื่อกรอกเลข X)
+  // ฟังก์ชันปรับจำนวน Segment
   const handleSegmentCountChange = (count) => {
     const newCount = parseInt(count) || 1;
     setSegmentCount(newCount);
-    
-    // ปรับขนาด Array ให้เท่ากับจำนวนใหม่
     const newSegments = [...trackSegments];
     if (newCount > newSegments.length) {
-        // ถ้าเพิ่ม: ให้เพิ่มช่องว่างเข้าไป
         for (let i = newSegments.length; i < newCount; i++) {
             newSegments.push({ type: 'STRAIGHT', distance: 100 });
         }
     } else {
-        // ถ้าลด: ให้ตัดส่วนเกินออก
         newSegments.splice(newCount);
     }
     setTrackSegments(newSegments);
   };
 
-  // ฟังก์ชันแก้ไขค่าในแต่ละ Segment (เมื่อพิมพ์ในแต่ละแถว)
   const handleSegmentChange = (index, field, value) => {
     const newSegments = [...trackSegments];
     newSegments[index][field] = value;
     setTrackSegments(newSegments);
   };
 
-
   // --- ส่วนของ MANAGE (LIST & EDIT) ---
   const [allData, setAllData] = useState({ horses: [], trainings: [], actions: [], tracks: [] });
   const [editMode, setEditMode] = useState(null);
   const [editData, setEditData] = useState({});
   const [editFile, setEditFile] = useState(null); 
-  // 🏟️ State สำหรับ Edit Track Segments
   const [editSegments, setEditSegments] = useState([]);
 
   useEffect(() => {
@@ -98,7 +91,6 @@ function Admin() {
     } else if (addType === 'TRACK') { 
         data.append('description', formData.description);
         data.append('distance', formData.distance);
-        // 🏟️ ส่ง Segments ไปเป็น JSON String
         data.append('segments', JSON.stringify(trackSegments));
     }
 
@@ -133,7 +125,6 @@ function Admin() {
     setEditMode(item._id);
     setEditData(item);
     setEditFile(null);
-    // ถ้าเป็น Track ให้โหลด Segments มาใส่ State Edit ด้วย
     if (item.segments) {
         setEditSegments(item.segments);
     }
@@ -168,7 +159,6 @@ function Admin() {
     } else if (type === 'TRACK') { 
         data.append('description', editData.description);
         data.append('distance', editData.distance);
-        // 🏟️ ส่ง Segments ที่แก้แล้วกลับไป
         data.append('segments', JSON.stringify(editSegments));
     }
 
@@ -185,6 +175,7 @@ function Admin() {
     }
   };
 
+  // --- RENDER LIST ---
   const renderCardList = (list, type) => (
     <div style={styles.grid}>
         {list.map(item => (
@@ -192,11 +183,11 @@ function Admin() {
                 
                 {editMode === item._id ? (
                     <div style={{display:'flex', flexDirection:'column', alignItems:'center', marginRight:'10px'}}>
-                        <img src={item.image} alt={item.name} style={{width:'50px', height:'50px', borderRadius:'50%', objectFit:'cover', border: '1px solid #ddd', opacity: 0.5}} />
-                        <input type="file" onChange={e => setEditFile(e.target.files[0])} style={{width:'70px', fontSize:'0.7rem', marginTop:'5px'}} accept="image/*" />
+                        <img src={item.image} alt={item.name} style={{width:'60px', height:'60px', borderRadius:'50%', objectFit:'cover', border: '2px solid #555', opacity: 0.5}} />
+                        <input type="file" onChange={e => setEditFile(e.target.files[0])} style={{width:'80px', fontSize:'0.7rem', marginTop:'5px', color:'white'}} accept="image/*" />
                     </div>
                 ) : (
-                    <img src={item.image} alt={item.name} style={{width:'50px', height:'50px', borderRadius:'50%', objectFit:'cover', border: '1px solid #ddd', marginRight:'10px'}} />
+                    <img src={item.image} alt={item.name} style={{width:'60px', height:'60px', borderRadius:'50%', objectFit:'cover', border: '2px solid #333', marginRight:'10px'}} />
                 )}
                 
                 {editMode === item._id ? (
@@ -205,20 +196,20 @@ function Admin() {
                         <input value={editData.name} onChange={e => setEditData({...editData, name: e.target.value})} style={styles.miniInput} placeholder="ชื่อ"/>
 
                         {type === 'HORSE' && ( <div style={{display:'flex', gap:'5px'}}><input type="number" value={editData.stats?.speed} onChange={e => setEditData({...editData, stats: { ...editData.stats, speed: e.target.value } })} style={styles.miniInput} placeholder="Spd"/><input type="number" value={editData.stats?.stamina} onChange={e => setEditData({...editData, stats: { ...editData.stats, stamina: e.target.value } })} style={styles.miniInput} placeholder="Sta"/></div> )}
-                        {type === 'TRAINING' && ( <div style={{display:'flex', gap:'5px'}}><input type="number" value={editData.value} onChange={e => setEditData({...editData, value: e.target.value})} style={styles.miniInput} placeholder="Value"/><span style={{fontSize:'0.8rem', alignSelf:'center'}}>{item.statType}</span></div> )}
+                        {type === 'TRAINING' && ( <div style={{display:'flex', gap:'5px'}}><input type="number" value={editData.value} onChange={e => setEditData({...editData, value: e.target.value})} style={styles.miniInput} placeholder="Value"/><span style={{fontSize:'0.8rem', alignSelf:'center', color:'#aaa'}}>{item.statType}</span></div> )}
                         
                         {/* 🏟️ Edit TRACK Segments */}
                         {type === 'TRACK' && (
                             <div style={{display:'flex', gap:'5px', flexDirection: 'column'}}>
                                 <input type="number" value={editData.distance} onChange={e => setEditData({...editData, distance: e.target.value})} style={styles.miniInput} placeholder="Total Distance"/>
-                                <div style={{maxHeight:'150px', overflowY:'auto', border:'1px solid #eee', padding:'5px'}}>
-                                    <small>แก้จุดสำคัญ ({editSegments.length} จุด):</small>
+                                <div style={{maxHeight:'150px', overflowY:'auto', border:'1px solid #444', padding:'5px', background:'#222'}}>
+                                    <small style={{color:'#aaa'}}>แก้จุดสำคัญ ({editSegments.length} จุด):</small>
                                     {editSegments.map((seg, idx) => (
                                         <div key={idx} style={{display:'flex', gap:'3px', marginBottom:'3px'}}>
-                                            <select value={seg.type} onChange={e => handleEditSegmentChange(idx, 'type', e.target.value)} style={{fontSize:'0.7rem', width:'60px'}}>
+                                            <select value={seg.type} onChange={e => handleEditSegmentChange(idx, 'type', e.target.value)} style={{fontSize:'0.7rem', width:'60px', background:'#333', color:'white', border:'1px solid #555'}}>
                                                 <option value="STRAIGHT">Str</option><option value="CURVE">Cur</option><option value="SLOPE">Slp</option>
                                             </select>
-                                            <input type="number" value={seg.distance} onChange={e => handleEditSegmentChange(idx, 'distance', e.target.value)} style={{fontSize:'0.7rem', width:'50px'}} />
+                                            <input type="number" value={seg.distance} onChange={e => handleEditSegmentChange(idx, 'distance', e.target.value)} style={{fontSize:'0.7rem', width:'50px', background:'#333', color:'white', border:'1px solid #555'}} />
                                         </div>
                                     ))}
                                 </div>
@@ -231,17 +222,18 @@ function Admin() {
                         </div>
                     </div>
                 ) : (
-                    // 🟢 โหมดปกติ
+                    // 🟢 โหมดปกติ (แสดงผล)
                     <div style={{flex:1}}>
-                        <div style={{fontWeight:'bold'}}>{item.name}</div>
-                        {type === 'HORSE' && <div style={{fontSize:'0.8rem', color:'#666'}}>Spd: {item.stats?.speed} | Sta: {item.stats?.stamina}</div>}
+                        <div style={{fontWeight:'bold', color:'white', fontSize:'1rem'}}>{item.name}</div>
+                        {type === 'HORSE' && <div style={{fontSize:'0.8rem', color:'#aaa'}}>Spd: {item.stats?.speed} | Sta: {item.stats?.stamina}</div>}
                         {type === 'TRAINING' && <div style={{fontSize:'0.8rem', color:'#e91e63'}}>+{item.value} {item.statType}</div>}
+                        {type === 'ACTION' && <div style={{fontSize:'0.8rem', color:'#00e676'}}>{item.effectType} ({item.value})</div>}
                         
                         {/* 🏟️ แสดงผลสนาม */}
                         {type === 'TRACK' && (
-                            <div style={{fontSize:'0.8rem', color:'#3f51b5'}}>
+                            <div style={{fontSize:'0.8rem', color:'#2196f3'}}>
                                 <div>ระยะรวม: {item.distance}m</div>
-                                <div style={{fontSize:'0.7rem', color:'#666'}}>
+                                <div style={{fontSize:'0.7rem', color:'#aaa'}}>
                                     (มี {item.segments?.length || 0} จุดสำคัญ)
                                 </div>
                             </div>
@@ -261,102 +253,121 @@ function Admin() {
   );
 
   return (
-    <div style={styles.container}>
-      <header style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'20px'}}>
-        <Link to="/home" style={{textDecoration:'none', fontWeight:'bold', color: '#333'}}>⬅ กลับหน้าหลัก</Link>
-        <h1>🛠️ Game Master Control</h1>
-      </header>
-      <div style={styles.tabs}>
-        <button onClick={() => setTab('ADD')} style={tab === 'ADD' ? styles.activeTab : styles.tab}>➕ เพิ่มข้อมูลใหม่ (Add)</button>
-        <button onClick={() => setTab('MANAGE')} style={tab === 'MANAGE' ? styles.activeTab : styles.tab}>📋 จัดการข้อมูล (Edit/Delete)</button>
-      </div>
-
-      {tab === 'ADD' && (
-        <div style={styles.box}>
-            <h2>เพิ่มข้อมูลลง Database</h2>
-            <div style={{marginBottom:'15px'}}>
-                <label>ประเภท: </label>
-                <select value={addType} onChange={(e) => setAddType(e.target.value)} style={styles.input}>
-                    <option value="HORSE">🐎 ม้าแข่ง</option><option value="TRAINING">🏋️ การ์ดฝึก</option><option value="ACTION">⚡ การ์ด Action</option>
-                    <option value="TRACK">🏟️ สนามแข่ง</option> 
-                </select>
+    // ✅ Wrapper สำหรับพื้นหลังสีดำเต็มจอ
+    <div style={styles.pageWrapper}>
+        <div style={styles.container}>
+            <header style={styles.header}>
+                <Link to="/home" style={styles.backLink}>⬅ DASHBOARD</Link>
+                <h1 style={styles.title}>GAME MASTER</h1>
+            </header>
+            
+            <div style={styles.tabs}>
+                <button onClick={() => setTab('ADD')} style={tab === 'ADD' ? styles.activeTab : styles.tab}>➕ ADD NEW</button>
+                <button onClick={() => setTab('MANAGE')} style={tab === 'MANAGE' ? styles.activeTab : styles.tab}>📋 MANAGE DATA</button>
             </div>
-            <form onSubmit={handleAddSubmit}>
-                <div style={styles.field}><label>ชื่อ:</label><input type="text" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} style={styles.input} required placeholder="ใส่ชื่อ..." /></div>
-                <div style={styles.field}><label>รูปภาพ (File Upload):</label><input id="fileInput" type="file" onChange={e => setFile(e.target.files[0])} style={styles.input} accept="image/*" /></div>
-                
-                {addType === 'HORSE' && (<><div style={styles.field}><label>ระดับความหายาก:</label><select value={formData.rarity} onChange={e => setFormData({...formData, rarity: e.target.value})} style={styles.input}><option value="N">N</option><option value="R">R</option><option value="SR">SR</option><option value="SSR">SSR</option></select></div><div style={{display:'flex', gap:'10px'}}><input type="number" placeholder="Speed" value={formData.speed} onChange={e => setFormData({...formData, speed: e.target.value})} style={styles.input} /><input type="number" placeholder="Stamina" value={formData.stamina} onChange={e => setFormData({...formData, stamina: e.target.value})} style={styles.input} /></div></>)}
-                {addType === 'TRAINING' && (<><div style={styles.field}><label>เพิ่มค่าพลัง:</label><select value={formData.statType} onChange={e => setFormData({...formData, statType: e.target.value})} style={styles.input}><option value="SPEED">SPEED</option><option value="STAMINA">STAMINA</option><option value="POWER">POWER</option></select></div><div style={styles.field}><label>จำนวน (Value):</label><input type="number" value={formData.value} onChange={e => setFormData({...formData, value: e.target.value})} style={styles.input} /></div></>)}
-                {addType === 'ACTION' && (<><div style={styles.field}><label>คำอธิบาย:</label><input value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} style={styles.input} placeholder="เช่น เร่งความเร็วเมื่อ..." /></div><div style={styles.field}><label>เงื่อนไข:</label><select value={formData.condition} onChange={e => setFormData({...formData, condition: e.target.value})} style={styles.input}><option value="ANY">ANY</option><option value="START">START</option><option value="CURVE">CURVE</option><option value="STRAIGHT">STRAIGHT</option><option value="SLOPE">SLOPE</option><option value="LAST_SPURT">LAST_SPURT</option></select></div><div style={{display:'flex', gap:'10px'}}><select value={formData.effectType} onChange={e => setFormData({...formData, effectType: e.target.value})} style={styles.input}><option value="SPEED_BOOST">Speed Boost</option><option value="STAMINA_HEAL">Heal</option></select><input type="number" placeholder="Value" value={formData.value} onChange={e => setFormData({...formData, value: e.target.value})} style={styles.input} /></div></>)}
-                
-                {/* 🏟️ ฟอร์มเพิ่มสนามแบบ Manual Detail */}
-                {addType === 'TRACK' && (<>
-                    <div style={styles.field}><label>ระยะทางรวม (เมตร):</label><input type="number" value={formData.distance} onChange={e => setFormData({...formData, distance: e.target.value})} style={styles.input} /></div>
-                    <div style={styles.field}><label>คำอธิบายสนาม:</label><input value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} style={styles.input} /></div>
-                    
-                    <div style={{backgroundColor:'#f5f5f5', padding:'10px', borderRadius:'5px', marginTop:'10px'}}>
-                        <label style={{fontWeight:'bold'}}>📍 กำหนดจุดสำคัญ (Segments):</label>
-                        <div style={{display:'flex', alignItems:'center', gap:'10px', marginTop:'5px'}}>
-                            <span>จำนวนจุด:</span>
-                            <input type="number" min="1" max="20" value={segmentCount} onChange={e => handleSegmentCountChange(e.target.value)} style={{width:'60px', padding:'5px'}} />
+
+            <div style={styles.contentBox}>
+                {tab === 'ADD' && (
+                    <div>
+                        <h2 style={{color:'white', marginBottom:'20px'}}>Add New Asset</h2>
+                        <div style={{marginBottom:'20px'}}>
+                            <label style={{color:'#aaa'}}>Type: </label>
+                            <select value={addType} onChange={(e) => setAddType(e.target.value)} style={styles.input}>
+                                <option value="HORSE">🐎 Horse</option><option value="TRAINING">🏋️ Training</option><option value="ACTION">⚡ Action</option><option value="TRACK">🏟️ Track</option> 
+                            </select>
                         </div>
-                        
-                        {/* Loop สร้าง Input Bar ตามจำนวนที่กรอก */}
-                        <div style={{marginTop:'10px', display:'flex', flexDirection:'column', gap:'5px'}}>
-                            {trackSegments.map((seg, idx) => (
-                                <div key={idx} style={{display:'flex', gap:'10px', alignItems:'center'}}>
-                                    <span style={{width:'20px', fontSize:'0.8rem', color:'#666'}}>{idx+1}.</span>
-                                    <select value={seg.type} onChange={e => handleSegmentChange(idx, 'type', e.target.value)} style={{padding:'5px', borderRadius:'5px', border:'1px solid #ccc'}}>
-                                        <option value="STRAIGHT">ทางตรง (Straight)</option>
-                                        <option value="CURVE">ทางโค้ง (Curve)</option>
-                                        <option value="SLOPE">ทางลาด/เนิน (Slope)</option>
-                                    </select>
-                                    <input 
-                                        type="number" 
-                                        placeholder="ระยะ (m)" 
-                                        value={seg.distance} 
-                                        onChange={e => handleSegmentChange(idx, 'distance', e.target.value)} 
-                                        style={{padding:'5px', width:'100px', borderRadius:'5px', border:'1px solid #ccc'}}
-                                    />
+                        <form onSubmit={handleAddSubmit}>
+                            <div style={styles.field}>
+                                <label style={{color:'#aaa'}}>Name:</label>
+                                <input type="text" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} style={styles.input} required />
+                            </div>
+                            <div style={styles.field}>
+                                <label style={{color:'#aaa'}}>Image:</label>
+                                <input id="fileInput" type="file" onChange={e => setFile(e.target.files[0])} style={styles.input} accept="image/*" />
+                            </div>
+                            
+                            {addType === 'HORSE' && (<><div style={styles.field}><label style={{color:'#aaa'}}>Rarity:</label><select value={formData.rarity} onChange={e => setFormData({...formData, rarity: e.target.value})} style={styles.input}><option value="N">N</option><option value="R">R</option><option value="SR">SR</option><option value="SSR">SSR</option></select></div><div style={{display:'flex', gap:'10px'}}><input type="number" placeholder="Speed" value={formData.speed} onChange={e => setFormData({...formData, speed: e.target.value})} style={styles.input} /><input type="number" placeholder="Stamina" value={formData.stamina} onChange={e => setFormData({...formData, stamina: e.target.value})} style={styles.input} /></div></>)}
+                            {addType === 'TRAINING' && (<><div style={styles.field}><label style={{color:'#aaa'}}>Stat Type:</label><select value={formData.statType} onChange={e => setFormData({...formData, statType: e.target.value})} style={styles.input}><option value="SPEED">SPEED</option><option value="STAMINA">STAMINA</option><option value="POWER">POWER</option></select></div><div style={styles.field}><label style={{color:'#aaa'}}>Value:</label><input type="number" value={formData.value} onChange={e => setFormData({...formData, value: e.target.value})} style={styles.input} /></div></>)}
+                            {addType === 'ACTION' && (<><div style={styles.field}><label style={{color:'#aaa'}}>Description:</label><input value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} style={styles.input} /></div><div style={styles.field}><label style={{color:'#aaa'}}>Condition:</label><select value={formData.condition} onChange={e => setFormData({...formData, condition: e.target.value})} style={styles.input}><option value="ANY">ANY</option><option value="START">START</option><option value="CURVE">CURVE</option><option value="STRAIGHT">STRAIGHT</option><option value="SLOPE">SLOPE</option><option value="LAST_SPURT">LAST_SPURT</option></select></div><div style={{display:'flex', gap:'10px'}}><select value={formData.effectType} onChange={e => setFormData({...formData, effectType: e.target.value})} style={styles.input}><option value="SPEED_BOOST">Speed</option><option value="STAMINA_HEAL">Heal</option><option value="LANE_CHANGE">Lane Change</option></select><input type="number" placeholder="Value" value={formData.value} onChange={e => setFormData({...formData, value: e.target.value})} style={styles.input} /></div></>)}
+                            
+                            {/* 🏟️ ฟอร์มเพิ่มสนาม */}
+                            {addType === 'TRACK' && (<>
+                                <div style={styles.field}><label style={{color:'#aaa'}}>Total Distance:</label><input type="number" value={formData.distance} onChange={e => setFormData({...formData, distance: e.target.value})} style={styles.input} /></div>
+                                <div style={styles.field}><label style={{color:'#aaa'}}>Description:</label><input value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} style={styles.input} /></div>
+                                
+                                <div style={{backgroundColor:'#252525', padding:'10px', borderRadius:'10px', marginTop:'10px', border:'1px solid #444'}}>
+                                    <label style={{fontWeight:'bold', color:'white'}}>📍 Segments:</label>
+                                    <div style={{display:'flex', alignItems:'center', gap:'10px', marginTop:'5px'}}>
+                                        <span style={{color:'#aaa'}}>Count:</span>
+                                        <input type="number" min="1" max="20" value={segmentCount} onChange={e => handleSegmentCountChange(e.target.value)} style={{width:'60px', padding:'5px', background:'#333', border:'1px solid #555', color:'white', borderRadius:'5px'}} />
+                                    </div>
+                                    <div style={{marginTop:'10px', display:'flex', flexDirection:'column', gap:'5px'}}>
+                                        {trackSegments.map((seg, idx) => (
+                                            <div key={idx} style={{display:'flex', gap:'10px', alignItems:'center'}}>
+                                                <span style={{width:'20px', fontSize:'0.8rem', color:'#666'}}>{idx+1}.</span>
+                                                <select value={seg.type} onChange={e => handleSegmentChange(idx, 'type', e.target.value)} style={{padding:'5px', borderRadius:'5px', border:'1px solid #555', background:'#333', color:'white'}}>
+                                                    <option value="STRAIGHT">Straight</option><option value="CURVE">Curve</option><option value="SLOPE">Slope</option>
+                                                </select>
+                                                <input type="number" placeholder="Dist (m)" value={seg.distance} onChange={e => handleSegmentChange(idx, 'distance', e.target.value)} style={{padding:'5px', width:'100px', borderRadius:'5px', border:'1px solid #555', background:'#333', color:'white'}} />
+                                            </div>
+                                        ))}
+                                    </div>
                                 </div>
-                            ))}
-                        </div>
+                            </>)}
+
+                            <button type="submit" style={styles.submitBtn}>💾 SAVE TO DB</button>
+                        </form>
                     </div>
-                </>)}
+                )}
 
-                <button type="submit" style={styles.submitBtn}>💾 บันทึกเข้า DB</button>
-            </form>
+                {tab === 'MANAGE' && (
+                    <div style={{color:'white'}}>
+                        <h3 style={{borderBottom:'1px solid #333', paddingBottom:'10px'}}>🐎 Horses ({allData.horses.length})</h3>{renderCardList(allData.horses, 'HORSE')}
+                        <h3 style={{marginTop:'30px', borderBottom:'1px solid #333', paddingBottom:'10px'}}>🏋️ Training Cards ({allData.trainings.length})</h3>{renderCardList(allData.trainings, 'TRAINING')}
+                        <h3 style={{marginTop:'30px', borderBottom:'1px solid #333', paddingBottom:'10px'}}>⚡ Action Cards ({allData.actions.length})</h3>{renderCardList(allData.actions, 'ACTION')}
+                        <h3 style={{marginTop:'30px', borderBottom:'1px solid #333', paddingBottom:'10px'}}>🏟️ Tracks ({allData.tracks.length})</h3>{renderCardList(allData.tracks, 'TRACK')}
+                    </div>
+                )}
+            </div>
         </div>
-      )}
-
-      {tab === 'MANAGE' && (
-        <div style={{marginTop: '20px'}}>
-            <h3>🐎 ม้าแข่ง ({allData.horses.length})</h3>{renderCardList(allData.horses, 'HORSE')}
-            <h3 style={{marginTop:'30px'}}>🏋️ การ์ดฝึกซ้อม ({allData.trainings.length})</h3>{renderCardList(allData.trainings, 'TRAINING')}
-            <h3 style={{marginTop:'30px'}}>⚡ Action Cards ({allData.actions.length})</h3>{renderCardList(allData.actions, 'ACTION')}
-            <h3 style={{marginTop:'30px'}}>🏟️ สนามแข่ง ({allData.tracks.length})</h3>{renderCardList(allData.tracks, 'TRACK')}
-        </div>
-      )}
     </div>
   );
 }
 
+// 🎨 STYLES (Modern Dark Theme)
 const styles = {
-  container: { maxWidth: '800px', margin: '0 auto', padding: '20px', fontFamily: 'Arial' },
-  tabs: { display: 'flex', marginBottom: '20px' },
-  tab: { flex: 1, padding: '10px', cursor: 'pointer', border: 'none', backgroundColor: '#e0e0e0', fontSize:'1rem' },
-  activeTab: { flex: 1, padding: '10px', cursor: 'pointer', border: 'none', backgroundColor: '#3f51b5', color: 'white', fontWeight: 'bold', fontSize:'1rem' },
-  box: { backgroundColor: 'white', padding: '30px', borderRadius: '10px', boxShadow: '0 4px 10px rgba(0,0,0,0.1)' },
-  field: { marginBottom: '15px' },
-  input: { width: '100%', padding: '10px', border: '1px solid #ccc', borderRadius: '5px', marginTop:'5px', boxSizing:'border-box' },
-  submitBtn: { width: '100%', padding: '15px', backgroundColor: '#2ecc71', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', marginTop:'15px', fontSize:'1.1rem', fontWeight:'bold' },
-  grid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))', gap: '15px' },
-  card: { display: 'flex', alignItems: 'center', backgroundColor: 'white', padding: '10px', borderRadius: '8px', boxShadow: '0 2px 5px rgba(0,0,0,0.1)', border: '1px solid #eee' },
-  editBtn: { backgroundColor: '#ff9800', border:'none', cursor:'pointer', padding:'8px', borderRadius:'5px', marginRight:'5px', fontSize:'1rem' },
-  deleteBtn: { backgroundColor: '#e91e63', border:'none', cursor:'pointer', padding:'8px', borderRadius:'5px', color:'white', fontSize:'1rem' },
-  miniInput: { width: '100%', padding: '5px', border: '1px solid #ddd', borderRadius:'4px' },
-  saveBtn: { backgroundColor: '#4caf50', color:'white', border:'none', padding:'5px 10px', borderRadius:'3px', marginRight:'5px', cursor:'pointer', fontSize:'0.9rem' },
-  cancelBtn: { backgroundColor: '#999', color:'white', border:'none', padding:'5px 10px', borderRadius:'3px', cursor:'pointer', fontSize:'0.9rem' }
+  // ✅ เพิ่ม style นี้: คลุมทั้งหน้าด้วยสีดำ
+  pageWrapper: {
+    backgroundColor: '#111',
+    minHeight: '100vh',
+    width: '100%',
+    fontFamily: "'Inter', sans-serif",
+    boxSizing: 'border-box'
+  },
+  // ✅ แก้ container: ลบ background เดิมออก (เพราะย้ายไป pageWrapper แล้ว)
+  container: { 
+    maxWidth: '1000px', 
+    margin: '0 auto', 
+    padding: '40px 20px', 
+    color: 'white' 
+  },
+  header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '40px', borderBottom: '1px solid #333', paddingBottom: '20px' },
+  backLink: { textDecoration: 'none', color: '#aaa', fontWeight: 'bold', fontSize:'1.1rem', transition:'0.2s' },
+  title: { fontSize: '2rem', fontWeight: '900', color: '#e91e63', letterSpacing:'1px', margin:0 },
+  tabs: { display: 'flex', gap: '15px', marginBottom: '30px' },
+  tab: { flex: 1, padding: '15px', background: '#1e1e1e', color: '#aaa', border: '1px solid #333', borderRadius: '10px', cursor: 'pointer', fontWeight: 'bold', fontSize:'1rem', transition:'0.2s' },
+  activeTab: { flex: 1, padding: '15px', background: 'linear-gradient(45deg, #e91e63, #c2185b)', color: 'white', border: 'none', borderRadius: '10px', cursor: 'pointer', fontWeight: 'bold', fontSize:'1rem', boxShadow:'0 5px 15px rgba(233,30,99,0.3)' },
+  contentBox: { background: '#1e1e1e', padding: '40px', borderRadius: '20px', border: '1px solid #333', boxShadow:'0 10px 30px rgba(0,0,0,0.3)' },
+  field: { marginBottom: '20px' },
+  input: { width: '100%', padding: '15px', background: '#2a2a2a', border: '1px solid #444', borderRadius: '10px', color: 'white', marginTop:'5px', boxSizing:'border-box', outline:'none', fontSize:'1rem' },
+  submitBtn: { width: '100%', padding: '15px', background: '#00e676', color: 'black', border: 'none', borderRadius: '10px', fontWeight: 'bold', cursor: 'pointer', marginTop:'20px', fontSize:'1.1rem', transition:'0.2s' },
+  grid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '15px', marginTop: '20px' },
+  card: { display: 'flex', alignItems: 'center', background: '#252525', padding: '15px', borderRadius: '12px', border: '1px solid #333', transition:'0.2s', ':hover':{ borderColor:'#555' } },
+  editBtn: { background: '#ff9800', border:'none', cursor:'pointer', padding:'10px', borderRadius:'8px', marginRight:'5px', fontSize:'1rem' },
+  deleteBtn: { background: '#e91e63', border:'none', cursor:'pointer', padding:'10px', borderRadius:'8px', color:'white', fontSize:'1rem' },
+  miniInput: { width: '100%', padding: '8px', background: '#333', border: '1px solid #555', borderRadius: '5px', color:'white', outline:'none' },
+  saveBtn: { background: '#00e676', color:'black', border:'none', padding:'5px 15px', borderRadius:'5px', marginRight:'5px', cursor:'pointer', fontWeight:'bold' },
+  cancelBtn: { background: '#555', color:'white', border:'none', padding:'5px 15px', borderRadius:'5px', cursor:'pointer' }
 };
 
 export default Admin;

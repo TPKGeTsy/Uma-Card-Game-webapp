@@ -2,11 +2,11 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { TRACKS } from '../data/track';
-import { TRAINING_CARDS } from '../data/trainingCards';
+
 import BattleRace from './BattleRace';
 
-// Config & Constants
-const PHASES = { LOAD: 0, SETUP: 1, DRAFT: 2, ALLOCATE: 3, RACE: 4, RESULT: 5 };
+// ✅ แก้ไข 1: เปลี่ยนชื่อ DRAFT เป็น DECK_SELECT ให้ตรงกับที่เรียกใช้
+const PHASES = { LOAD: 0, SETUP: 1, DECK_SELECT: 2, ALLOCATE: 3, RACE: 4, RESULT: 5 };
 
 // ==========================================
 // 🧩 SUB-COMPONENT: BATTLE SETUP (Phase 1)
@@ -114,76 +114,76 @@ function BattleSetup({ onConfirmTeam, trackInfo, triggerPoints, inventoryHorses,
 }
 
 // ==========================================
-// 🃏 SUB-COMPONENT: BATTLE DRAFT (Phase 2)
+// 🃏 SUB-COMPONENT: BATTLE DECK SELECT (Phase 2)
 // ==========================================
-function BattleDraft({ onDraftComplete }) {
-    const [draftedCards, setDraftedCards] = useState([]);
-    const [currentOptions, setCurrentOptions] = useState([]);
+function BattleDeckSelect({ inventoryActions, onDeckComplete }) {
+    const [selectedCards, setSelectedCards] = useState([]);
+    const MAX_CARDS = 6; // ให้เลือกได้ 6 ใบ
 
-    useEffect(() => {
-        rollOptions();
-    }, []);
-
-    const rollOptions = () => {
-        const pool = [...TRAINING_CARDS];
-        const options = [];
-        while(options.length < 3) {
-            const rand = pool[Math.floor(Math.random() * pool.length)];
-            if (!options.find(o => o.id === rand.id)) options.push(rand);
-        }
-        setCurrentOptions(options);
-    };
-
-    const handleSelectCard = (card) => {
-        const newDeck = [...draftedCards, card];
-        setDraftedCards(newDeck);
-        if (newDeck.length >= 4) {
-            setTimeout(() => onDraftComplete(newDeck), 500);
+    const toggleCard = (card) => {
+        if (selectedCards.find(c => c._id === card._id)) {
+            setSelectedCards(prev => prev.filter(c => c._id !== card._id));
         } else {
-            rollOptions();
+            if (selectedCards.length < MAX_CARDS) {
+                setSelectedCards(prev => [...prev, card]);
+            }
         }
     };
 
     return (
-        <div style={{textAlign:'center', maxWidth:'900px', margin:'0 auto', color:'white'}}>
-            <h2 style={{fontSize:'2rem', textShadow:'0 0 10px #e91e63'}}>🎴 Phase 2: Roguelike Draft</h2>
-            <p style={{color:'#aaa'}}>เลือกการ์ดฝึกซ้อมเพื่ออัปเกรด Stat ม้าของคุณ</p>
-            <div style={{margin:'20px auto', width:'300px', height:'10px', background:'#333', borderRadius:'5px', overflow:'hidden'}}>
-                <div style={{width:`${(draftedCards.length/4)*100}%`, height:'100%', background:'#00e676', transition:'width 0.3s'}}></div>
+        <div style={{textAlign:'center', maxWidth:'1000px', margin:'0 auto', color:'white'}}>
+            <h2 style={{fontSize:'2rem', textShadow:'0 0 10px #2196f3'}}>🎴 Phase 2: Deck Selection</h2>
+            <p style={{color:'#aaa'}}>เลือกการ์ด Action เพื่อนำไปใช้ในการแข่ง (Max {MAX_CARDS})</p>
+            
+            {/* Status Bar */}
+            <div style={{margin:'20px auto', background:'#333', padding:'10px', borderRadius:'10px', width:'fit-content'}}>
+                Selected: <span style={{color:'#2196f3', fontWeight:'bold', fontSize:'1.2rem'}}>{selectedCards.length}</span> / {MAX_CARDS}
             </div>
-            <div style={{marginBottom:'30px'}}>เลือกไปแล้ว: {draftedCards.length} / 4 ใบ</div>
 
-            <div style={{display:'flex', justifyContent:'center', gap:'20px', flexWrap:'wrap'}}>
-                {currentOptions.map((card, idx) => (
-                    <div 
-                        key={idx} 
-                        onClick={() => handleSelectCard(card)}
-                        style={{
-                            width:'200px', height:'280px', 
-                            background:'#2a2a2a', border:'2px solid #555', borderRadius:'15px', 
-                            cursor:'pointer', padding:'15px', transition:'transform 0.2s',
-                            display:'flex', flexDirection:'column', alignItems:'center', position:'relative',
-                            boxShadow:'0 4px 15px rgba(0,0,0,0.5)'
-                        }}
-                        onMouseOver={(e) => { e.currentTarget.style.transform = 'scale(1.05)'; e.currentTarget.style.borderColor = '#e91e63'; }}
-                        onMouseOut={(e) => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.borderColor = '#555'; }}
-                    >
-                        <div style={{alignSelf:'flex-start', padding:'2px 8px', background:'#e91e63', borderRadius:'4px', fontSize:'0.7rem', color:'white', fontWeight:'bold'}}>{card.type}</div>
-                        <div style={{fontWeight:'bold', fontSize:'1.1rem', margin:'10px 0', height:'40px', display:'flex', alignItems:'center'}}>{card.name}</div>
-                        <div style={{fontSize:'0.9rem', color:'#aaa', fontStyle:'italic', marginBottom:'10px', minHeight:'40px'}}>{card.desc}</div>
-                        
-                        <div style={{width:'100%', background:'#111', padding:'10px', borderRadius:'8px', marginTop:'auto'}}>
-                            {Object.keys(card.stats).map(key => (
-                                <div key={key} style={{display:'flex', justifyContent:'space-between', fontSize:'0.9rem'}}>
-                                    <span style={{textTransform:'capitalize', color:'#ccc'}}>{key}</span>
-                                    <span style={{color: card.stats[key] > 0 ? '#00e676' : 'red'}}>
-                                        {card.stats[key] > 0 ? '+' : ''}{card.stats[key]}
-                                    </span>
-                                </div>
-                            ))}
+            {/* ปุ่ม Confirm */}
+            <button 
+                onClick={() => onDeckComplete(selectedCards)}
+                disabled={selectedCards.length === 0}
+                style={{
+                    padding:'10px 40px', fontSize:'1.2rem', marginBottom:'30px', cursor:'pointer',
+                    background: selectedCards.length>0 ? 'linear-gradient(45deg, #2196f3, #21cbf3)' : '#555',
+                    border:'none', borderRadius:'30px', color:'white', fontWeight:'bold'
+                }}
+            >
+                CONFIRM DECK ✅
+            </button>
+
+            {/* Grid การ์ด */}
+            <div style={{display:'flex', justifyContent:'center', gap:'15px', flexWrap:'wrap', maxHeight:'60vh', overflowY:'auto', padding:'10px'}}>
+                {inventoryActions.map((card) => {
+                    const isSelected = selectedCards.find(c => c._id === card._id);
+                    return (
+                        <div 
+                            key={card._id} 
+                            onClick={() => toggleCard(card)}
+                            style={{
+                                width:'140px', height:'200px', 
+                                background: isSelected ? '#1e3a2a' : '#2a2a2a', 
+                                border: isSelected ? '3px solid #00e676' : '2px solid #555', 
+                                borderRadius:'10px', cursor:'pointer', padding:'10px', 
+                                display:'flex', flexDirection:'column', justifyContent:'space-between',
+                                transform: isSelected ? 'scale(1.05)' : 'scale(1)',
+                                transition: 'all 0.2s', boxShadow: '0 4px 10px rgba(0,0,0,0.5)'
+                            }}
+                        >
+                            <div style={{alignSelf:'flex-start', padding:'2px 6px', background:'#e91e63', borderRadius:'4px', fontSize:'0.6rem', color:'white'}}>{card.type}</div>
+                            <div style={{fontWeight:'bold', fontSize:'0.9rem', margin:'5px 0'}}>{card.name}</div>
+                            {/* รูปการ์ด (ถ้ามี) */}
+                            <img src={card.image} style={{width:'100%', height:'80px', objectFit:'cover', borderRadius:'5px'}} onError={(e)=>e.target.src='https://placehold.co/100'}/>
+                            
+                            <div style={{fontSize:'0.7rem', color:'#ccc', marginTop:'5px'}}>{card.desc || "No description"}</div>
+                            
+                            <div style={{fontSize:'0.75rem', color: isSelected?'#00e676':'#aaa', fontWeight:'bold', marginTop:'auto'}}>
+                                {isSelected ? 'SELECTED' : 'SELECT'}
+                            </div>
                         </div>
-                    </div>
-                ))}
+                    )
+                })}
             </div>
         </div>
     );
@@ -192,7 +192,8 @@ function BattleDraft({ onDraftComplete }) {
 // ==========================================
 // 🛠️ SUB-COMPONENT: BATTLE ALLOCATE (Phase 3)
 // ==========================================
-function BattleAllocate({ team, draftedCards, onAllocateComplete }) {
+// ✅ แก้ไข 2: เปลี่ยนชื่อตัวรับ prop จาก draftedCards เป็น deckCards ให้ตรงกับที่ส่งมา
+function BattleAllocate({ team, deckCards, onAllocateComplete }) {
     const [allocations, setAllocations] = useState({});
     const [selectedCard, setSelectedCard] = useState(null);
 
@@ -217,14 +218,14 @@ function BattleAllocate({ team, draftedCards, onAllocateComplete }) {
     };
 
     const handleCardClick = (card) => {
-        const ownerId = Object.keys(allocations).find(hid => allocations[hid].find(c => c.id === card.id));
+        const ownerId = Object.keys(allocations).find(hid => allocations[hid].find(c => c._id === card._id));
         if (ownerId) {
             setAllocations(prev => ({
                 ...prev,
-                [ownerId]: prev[ownerId].filter(c => c.id !== card.id)
+                [ownerId]: prev[ownerId].filter(c => c._id !== card._id)
             }));
         } else {
-            setSelectedCard(card.id === selectedCard?.id ? null : card);
+            setSelectedCard(card._id === selectedCard?._id ? null : card);
         }
     };
 
@@ -253,7 +254,7 @@ function BattleAllocate({ team, draftedCards, onAllocateComplete }) {
                             key={horse._id}
                             onClick={() => handleHorseClick(horse)}
                             style={{
-                                width: '450px', // ✅ กว้างขึ้นเพื่อให้วางซ้ายขวาได้
+                                width: '450px', 
                                 height: '220px', 
                                 background: isTargetable ? '#1e3a2a' : '#2a2a2a',
                                 border: isTargetable ? '2px dashed #00e676' : '2px solid #444',
@@ -261,7 +262,7 @@ function BattleAllocate({ team, draftedCards, onAllocateComplete }) {
                                 overflow: 'hidden',
                                 cursor: isTargetable ? 'pointer' : 'default',
                                 transition: 'all 0.2s',
-                                display: 'flex', // ✅ Flex Row (แนวนอน)
+                                display: 'flex', 
                                 flexDirection: 'row'
                             }}
                         >
@@ -323,15 +324,16 @@ function BattleAllocate({ team, draftedCards, onAllocateComplete }) {
 
             {/* การ์ดในมือ */}
             <div style={{background:'#222', padding:'20px', borderRadius:'15px', border:'1px solid #444'}}>
-                <h4 style={{marginTop:0, color:'#ddd'}}>การ์ดที่ดราฟมา ({draftedCards.length})</h4>
+                <h4 style={{marginTop:0, color:'#ddd'}}>Your Deck ({deckCards.length})</h4>
                 <div style={{display:'flex', justifyContent:'center', gap:'15px', flexWrap:'wrap'}}>
-                    {draftedCards.map(card => {
-                        const ownerId = Object.keys(allocations).find(hid => allocations[hid].find(c => c.id === card.id));
-                        const isSelected = selectedCard?.id === card.id;
+                    {/* ✅ แก้ไข 3: ใช้ deckCards.map แทน draftedCards.map */}
+                    {deckCards.map(card => {
+                        const ownerId = Object.keys(allocations).find(hid => allocations[hid].find(c => c._id === card._id));
+                        const isSelected = selectedCard?.id === card._id;
                         
                         return (
                             <div 
-                                key={card.id}
+                                key={card._id}
                                 onClick={() => handleCardClick(card)}
                                 style={{
                                     width:'120px', height:'160px', 
@@ -345,7 +347,8 @@ function BattleAllocate({ team, draftedCards, onAllocateComplete }) {
                                 <div style={{fontSize:'0.8rem', fontWeight:'bold', color: isSelected?'#00e676':'white'}}>{card.name}</div>
                                 <div style={{fontSize:'0.7rem', color:'#aaa'}}>{card.desc}</div>
                                 <div style={{fontSize:'0.75rem', color:'#00e676', fontWeight:'bold'}}>
-                                    {Object.keys(card.stats).filter(k=>k!=='text').map(k => `${k.toUpperCase().slice(0,3)} ${card.stats[k]>0?'+':''}${card.stats[k]}`).join(' ')}
+                                    {/* แสดง effect แบบย่อ */}
+                                    {card.effectType} {card.value > 0 ? `+${card.value}` : ''}
                                 </div>
                             </div>
                         )
@@ -380,7 +383,7 @@ function Battle() {
   const [myInventoryHorses, setMyInventoryHorses] = useState([]);
   const [myInventoryActions, setMyInventoryActions] = useState([]); 
   const [myTeam, setMyTeam] = useState([]);
-  const [draftedDeck, setDraftedDeck] = useState([]); 
+  const [selectedDeck, setSelectedDeck] = useState([]); // ✅ เก็บการ์ดที่เลือกจาก Deck
 
   useEffect(() => {
     fetchUserData();
@@ -390,6 +393,7 @@ function Battle() {
   const fetchUserData = async () => {
     try {
         if (!token) {
+            // Mock Data สำหรับ Test
             setMyInventoryHorses([
                 { _id: 'm1', name: "Mock Week", rarity: "N", image: "https://placehold.co/100", stats: { speed: 600 } },
                 { _id: 'm2', name: "Mock Suzuka", rarity: "SSR", image: "https://placehold.co/100", stats: { speed: 1000 } }
@@ -409,52 +413,37 @@ function Battle() {
       const randomIndex = Math.floor(Math.random() * TRACKS.length);
       const selectedTrack = TRACKS[randomIndex];
       const weather = selectedTrack.weatherOptions ? selectedTrack.weatherOptions[Math.floor(Math.random() * selectedTrack.weatherOptions.length)] : "Sunny";
-      const finalTrackInfo = { ...selectedTrack, weather };
-      setTrackInfo(finalTrackInfo);
+      setTrackInfo({ ...selectedTrack, weather });
       
-      let availablePoints = finalTrackInfo.landmarks ? [...finalTrackInfo.landmarks] : [];
+      let availablePoints = selectedTrack.landmarks ? [...selectedTrack.landmarks] : [];
       if (availablePoints.length > 0) {
           const minPoints = 3; const maxPoints = availablePoints.length;
           const countToPick = Math.floor(Math.random() * (maxPoints - minPoints + 1)) + minPoints;
           let pickedPoints = availablePoints.sort(() => 0.5 - Math.random()).slice(0, countToPick).map(l => l.distance).sort((a, b) => a - b);
-          setTriggerPoints(pickedPoints.map(dist => Math.max(0, Math.min(dist + (Math.floor(Math.random() * 101) - 50), finalTrackInfo.distance))));
+          setTriggerPoints(pickedPoints.map(dist => Math.max(0, Math.min(dist + (Math.floor(Math.random() * 101) - 50), selectedTrack.distance))));
       } else { setTriggerPoints([500, 1000, 1500]); }
   };
 
   const handleSetupConfirm = (team) => {
       setMyTeam(team);
-      setPhase(PHASES.DRAFT);
+      setPhase(PHASES.DECK_SELECT); // ไปหน้าเลือก Deck
   };
 
-  const handleDraftComplete = (cards) => {
-      setDraftedDeck(cards);
-      setPhase(PHASES.ALLOCATE);
+  const handleDeckComplete = (cards) => {
+      setSelectedDeck(cards);
+      setPhase(PHASES.ALLOCATE); // ไปหน้าแจกการ์ด
   };
 
   const handleAllocateComplete = (allocations) => {
       const readyTeam = myTeam.map(horse => {
           const equipped = allocations[horse._id] || [];
-          const base = horse.stats || { speed:0, stamina:0, power:0, guts:0, wisdom:0 };
-          const finalStats = { ...base };
-
-          equipped.forEach(c => {
-              if(c.stats) {
-                  Object.keys(c.stats).forEach(k => {
-                      if(typeof c.stats[k] === 'number') {
-                          finalStats[k] = (finalStats[k] || 0) + c.stats[k];
-                      }
-                  });
-              }
-          });
-
+          const finalStats = { ...horse.stats };
           return { ...horse, equippedCards: equipped, finalStats };
       });
 
-      console.log("🚀 ส่งไม้ต่อให้สนามแข่ง:", readyTeam);
-      setMyTeam(readyTeam); // อัปเดตทีมล่าสุด
+      console.log("🚀 TEAM READY:", readyTeam);
+      setMyTeam(readyTeam);
       setPhase(PHASES.RACE);
-      // setMyTeam(readyTeam); 
-      // setPhase(PHASES.RACE); 
   };
 
   return (
@@ -462,18 +451,23 @@ function Battle() {
         {phase === PHASES.SETUP && (
             <BattleSetup onConfirmTeam={handleSetupConfirm} trackInfo={trackInfo} triggerPoints={triggerPoints} inventoryHorses={myInventoryHorses} inventoryActions={myInventoryActions} />
         )}
-        {phase === PHASES.DRAFT && (
-            <BattleDraft onDraftComplete={handleDraftComplete} />
+        
+        {/* ✅ Phase ใหม่: เลือก Deck */}
+        {phase === PHASES.DECK_SELECT && (
+            <BattleDeckSelect inventoryActions={myInventoryActions} onDeckComplete={handleDeckComplete} />
         )}
+
         {phase === PHASES.ALLOCATE && (
-            <BattleAllocate team={myTeam} draftedCards={draftedDeck} onAllocateComplete={handleAllocateComplete} />
+            <BattleAllocate team={myTeam} deckCards={selectedDeck} onAllocateComplete={handleAllocateComplete} />
         )}
+
         {phase === PHASES.RACE && (
             <BattleRace 
-                team={myTeam}          // ส่งม้าที่แต่งตัวเสร็จแล้วไป
-                trackInfo={trackInfo}  // ส่งข้อมูลสนามไป
+                team={myTeam}          
+                trackInfo={trackInfo}  
             />
         )}
+
         {phase === PHASES.LOAD && <div style={{color:'white', textAlign:'center', marginTop:'50px'}}>กำลังเตรียมสนามแข่ง... 🏇</div>}
     </div>
   );

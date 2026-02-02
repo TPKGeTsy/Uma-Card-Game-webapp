@@ -2,173 +2,164 @@
 
 const CONFIG = {
     BASE_SPEED: 18.0,
-    MIN_SPEED: 3.0,       // เดินเต่าตอนหมดแรง
+    MIN_SPEED: 3.0,
+    
+    // Lane Config
+    LANE_WIDTH: 1,
+    BLOCK_DISTANCE: 4.0,    // ปรับระยะ Block ให้ไกลขึ้น (จะได้เห็นชัดๆ ว่าติด)
+    LANE_CHANGE_SPEED: 2.0,
+    AUTO_LANE_CHANGE_DELAY: 1.0,
+    
+    // 🔋 Stamina Config (ปรับให้ใจดีขึ้น)
+    BASE_DRAIN: 1.5,        // ลดจาก 5.0 -> 1.5 (ยืนเฉยๆ ไม่ค่อยลด)
+    SPEED_PENALTY: 150.0,   // เพิ่มตัวหาร (จาก 60 -> 150) ยิ่งเยอะยิ่งลดน้อย
+    RECOVERY_RATE: 10.0,    // เพิ่มอัตราฟื้นฟู (จาก 5 -> 10)
     
     // Stats Factors
-    SPEED_CAP: 60,
-    POWER_ACCEL: 1500,
-    HILL_RESIST: 500,
-    GUTS_BURST: 2000,
-    WISDOM_SAVE: 3000,
-    
-    // 🔋 Stamina Config (ปรับให้โหดขึ้นสำหรับคนวิ่งไว)
-    BASE_DRAIN: 5.0,        // ยืนเฉยๆ ก็กินแรง
-    SPEED_PENALTY: 60.0,    // ยิ่งน้อย ยิ่งกินแรงตอนวิ่งไว (ปรับจาก 100 เหลือ 60 ให้ Runner เหนื่อย)
-    RECOVERY_RATE: 5.0      // อัตราฟื้นฟู (เฉพาะคนดูดท้าย)
+    SPEED_CAP: 60, POWER_ACCEL: 1500, HILL_RESIST: 500, GUTS_BURST: 2000, WISDOM_SAVE: 3000
 };
 
 /**
- * @param {Boolean} isGlobalLastSpurt - มีใครสักคนเข้า Last Spurt หรือยัง?
+ * @param {Array} allHorses - ส่งม้ามาทุกตัวเพื่อเช็คการชน
  */
-export const updateHorse = (horse, track, deltaTime = 0.1, leaderDistance = 0, secondPlaceDistance = 0, isGlobalLastSpurt = false) => {
+export const updateHorse = (horse, track, deltaTime = 0.1, allHorses = [], isGlobalLastSpurt = false) => {
     let next = { ...horse };
     if (next.finished) return next;
 
+    // จัดการ Status  Effect (ลดเวลา)
+
+    if (next.laneSwitchCooldown > 0) {
+        next.laneSwitchCooldown = Math.max(0, next.laneSwitchCooldown - deltaTime);
+    }
+
+    if (next.effects && next.effects.length > 0) {
+        next.effects = next.effects.map(e => ({ ...e, duration: e.duration - deltaTime })).filter(e => e.duration > 0);
+    } else {
+        next.effects = [];
+    }
+
     const stats = next.finalStats;
     const progress = next.currentDistance / track.distance;
-    
-    // เงื่อนไขเข้า Last Spurt:
-    // 1. ตัวเองถึงระยะ (66%)
-    // 2. หรือ (สำหรับ Chaser/Betweener) มีคนอื่นเปิด Last Spurt แล้ว! (Panic Mode)
-    const selfLastSpurt = progress >= 0.66;
-    const panicMode = isGlobalLastSpurt && (horse.strategy === 'CHASER' || horse.strategy === 'BETWEENER');
-    const isSpurtMode = selfLastSpurt || panicMode;
-
-    const gapToLeader = leaderDistance - next.currentDistance;
-    const leadGap = next.currentDistance - secondPlaceDistance;
+    const isLastSpurt = progress >= 0.66 || (isGlobalLastSpurt && ['CHASER','BETWEENER'].includes(horse.strategy));
 
     // ==========================================
-    // 🎯 1. TARGET SPEED & STRATEGY
+    // 🚧 1. LANE SYSTEM & BLOCKING LOGIC (ระบบใหม่)
+    // ==========================================
+    
+    // หา "ตัวขวาง" (Blocker) ที่อยู่เลนเดียวกัน และอยู่ข้างหน้าไม่ไกล
+    let blocker = null;
+    let gapToBlocker = 9999;
+
+    allHorses.forEach(other => {
+        if (other._id !== next._id && !other.finished) {
+            // เช็คว่าอยู่เลนเดียวกันไหม (ปัดเศษให้เป็นเลนเต็มๆ เช่น 1.0, 2.0)
+            const myLane = Math.round(next.lane);
+            const otherLane = Math.round(other.lane);
+
+            if (myLane === otherLane) {
+                const distDiff = other.currentDistance - next.currentDistance;
+                // ถ้าอยู่ข้างหน้า และระยะห่างน้อยกว่า Block Distance
+                if (distDiff > 0 && distDiff < CONFIG.BLOCK_DISTANCE) {
+                    // เจอคนบัง!
+                    if (distDiff < gapToBlocker) {
+                        gapToBlocker = distDiff;
+                        blocker = other;
+                    }
+                }
+            }
+        }
+    });
+
+    // ==========================================
+    // 🎯 2. TARGET SPEED CALCULATE
     // ==========================================
     const maxSpeed = CONFIG.BASE_SPEED + (stats.speed / CONFIG.SPEED_CAP);
     let targetSpeed = maxSpeed;
-    
-    let isRecovering = false;   // สถานะพักฟื้น (เลือดเด้ง)
-    let drainMultiplier = 1.0;  // ตัวคูณการใช้แรง
+    let drainMultiplier = 1.0;
 
+    // ... (Strategy Logic เดิม) ...
     switch (horse.strategy) {
-        // -----------------------------
-        // 🚩 RUNNER (วิ่งนำ - ห้ามพัก!)
-        // -----------------------------
         case 'RUNNER':
-            if (!isSpurtMode) {
-                targetSpeed *= 1.25; // วิ่งไวจัดๆ
-                drainMultiplier = 1.6; // กินแรงหนักมาก (ลมตีหน้า)
-
-                if (leadGap > 15) {
-                    // นำห่าง -> ผ่อนนิดหน่อย แต่ไม่พัก
-                    targetSpeed *= 0.85; 
-                    drainMultiplier = 1.0; // กลับมากินแรงปกติ (แต่ไม่รีเลือด)
-                } 
-                else if (leadGap < 5 && leadGap > 0) {
-                    // โดนจี้ตูด -> หนีตาย
-                    targetSpeed *= 1.1; 
-                    drainMultiplier = 2.2; // เผาเครื่องยนต์
-                }
-            }
+            targetSpeed *= isLastSpurt ? 1.05 : 1.25;
+            drainMultiplier = isLastSpurt ? 1.5 : 1.6;
             break;
-
-        // -----------------------------
-        // ⚔️ BETWEENER (สายเกาะ)
-        // -----------------------------
         case 'BETWEENER':
-            if (!isSpurtMode) {
-                // Drafting: เกาะตูด < 8m (ระยะดูดวิชา)
-                if (gapToLeader <= 8 && gapToLeader > 0) {
-                    targetSpeed *= 1.0; // รักษาความเร็วเท่าคันหน้า
-                    isRecovering = true; // ✅ ดูดท้าย = ได้พัก
-                } 
-                // ตามห่างเกินไป > 10m -> เร่ง
-                else if (gapToLeader > 10) { 
-                    targetSpeed *= 1.15; // เร่งเครื่อง
-                    drainMultiplier = 1.3; // กินแรงหน่อย
-                } else {
-                    // วิ่งลอยๆ
-                    targetSpeed *= 1.0;
-                    drainMultiplier = 1.0;
-                }
-            }
+            targetSpeed *= isLastSpurt ? 1.30 : 1.0;
+            drainMultiplier = isLastSpurt ? 2.0 : 1.0;
             break;
-
-        // -----------------------------
-        // 🐢 CHASER (สายออมแรง -> ระเบิด)
-        // -----------------------------
         case 'CHASER':
-            if (!isSpurtMode) {
-                targetSpeed *= 0.8; // วิ่งช้า
-                drainMultiplier = 0.5; // ประหยัดแรงสุดๆ
-                isRecovering = true; // ✅ วิ่งช้า = ได้พักตลอดเวลา
-            }
+            targetSpeed *= isLastSpurt ? 1.45 : 0.8;
+            drainMultiplier = isLastSpurt ? 3.0 : 0.5;
             break;
     }
 
-    // ==========================================
-    // 🔥 LAST SPURT (ใส่หมดแม็ก)
-    // ==========================================
-    if (isSpurtMode) {
-        isRecovering = false; // บังคับเลิกพักทุกคน
+    // Guts Bonus ช่วงท้าย
+    if (isLastSpurt && next.stamina > 0) {
+        targetSpeed *= (1 + (stats.guts / CONFIG.GUTS_BURST));
+    }
+
+    // Apply Effects
+    let speedModifier = 1.0;
+    next.effects.forEach(eff => {
+        if (eff.type === 'SPEED_UP') speedModifier += eff.value;
+        if (eff.type === 'SPEED_DOWN') speedModifier -= eff.value;
         
-        // ถ้าแรงเหลือ -> พุ่ง
-        if (next.stamina > 0) {
-            const gutsBonus = 1 + (stats.guts / CONFIG.GUTS_BURST);
-            
-            if (horse.strategy === 'CHASER') {
-                // มาแล้วลูกพี่! ถ้า Panic Mode (คนอื่นเข้าเส้นแดง) เร่งเลยไม่ต้องรอ
-                targetSpeed = maxSpeed * 1.45 * gutsBonus; 
-                drainMultiplier = 3.0; // เผาผลาญระดับนิวเคลียร์
-            } else if (horse.strategy === 'BETWEENER') {
-                targetSpeed = maxSpeed * 1.30 * gutsBonus;
-                drainMultiplier = 2.0;
-            } else { // Runner
-                // Runner ปลายแผ่ว (โดนไล่กวด)
-                targetSpeed = maxSpeed * 1.05; 
-                drainMultiplier = 1.5;
+        // 🛣️ FIX: Lane Change Logic (เปลี่ยนทีละเลน)
+        if (eff.type === 'LANE_CHANGE') {
+            // 1. ล็อคเป้าหมาย (ทำครั้งเดียวตอนเริ่ม Effect)
+            if (eff.targetLane === undefined) {
+                // คำนวณเลนเป้าหมายจากตำแหน่งปัจจุบัน (Round) + ทิศทาง
+                // เช่น อยู่ 0 (ซ้าย) + 1 (ขวา) = ไป 1 (กลาง) จบ. ไม่ไปต่อ.
+                eff.targetLane = Math.max(0, Math.min(2, Math.round(next.lane) + eff.direction));
             }
-        } else {
-            // แรงหมด = ความเร็วตก
-            targetSpeed *= 0.5; 
+
+            // 2. ขยับหาเป้าหมาย
+            if (Math.abs(next.lane - eff.targetLane) > 0.05) {
+                const moveDir = eff.targetLane > next.lane ? 1 : -1;
+                next.lane += moveDir * CONFIG.LANE_CHANGE_SPEED * deltaTime;
+            } else {
+                // 3. ถึงแล้ว -> ล็อคตำแหน่ง + ลบ Effect ทิ้งทันที
+                next.lane = eff.targetLane;
+                eff.duration = 0; // 🛑 สั่งจบงานทันที (กันมันคำนวณต่อแล้วไหลไปเลนอื่น)
+            }
         }
+    });
+    targetSpeed = Math.max(0, targetSpeed * speedModifier);
+
+    // 🚨 BLOCKING EFFECT: ถ้าโดนบล็อก ความเร็วต้องไม่เกินคนหน้า
+    if (blocker) {
+        // วิ่งเท่าคนหน้า (หรือช้ากว่าถ้าเราอยากผ่อน)
+        // แต่ถ้าเรากดสกิลพุ่งชน (Overpower) อาจจะยอมให้เบียดได้ (อนาคต)
+        targetSpeed = Math.min(targetSpeed, blocker.currentSpeed);
+        
+        // ถ้าโดนบล็อกนานๆ อาจจะเสีย Stamina เพิ่ม (Frustration)
+        drainMultiplier *= 1.2; 
     }
 
     // ==========================================
-    // 🔋 2. STAMINA LOGIC (Runner ห้ามเด้ง)
+    // 🔋 3. STAMINA
     // ==========================================
     if (!next.finished) {
-        if (isRecovering) {
-            // ฟื้นฟู (เฉพาะ Betweener/Chaser)
-            const recoveryBonus = 1 + (stats.wisdom / 5000);
-            next.stamina = Math.min(next.maxStamina, next.stamina + (CONFIG.RECOVERY_RATE * recoveryBonus * deltaTime));
-        } else {
-            // ลดลง (Drain)
-            // Runner จะโดนหนักที่ Speed Penalty เพราะวิ่งไว
-            const speedCost = (next.currentSpeed * next.currentSpeed) / CONFIG.SPEED_PENALTY;
-            let totalDrain = (CONFIG.BASE_DRAIN + speedCost) * drainMultiplier;
+        const speedCost = (next.currentSpeed * next.currentSpeed) / CONFIG.SPEED_PENALTY;
+        let totalDrain = (CONFIG.BASE_DRAIN + speedCost) * drainMultiplier;
+        const wisdomSave = stats.wisdom / CONFIG.WISDOM_SAVE; 
+        totalDrain *= (1 - wisdomSave);
 
-            // Wisdom ช่วยประหยัด
-            const wisdomSave = stats.wisdom / CONFIG.WISDOM_SAVE; 
-            totalDrain *= (1 - wisdomSave);
-
-            next.stamina = Math.max(0, next.stamina - (totalDrain * deltaTime));
+        // ถ้า Drafting (อยู่หลังคนอื่น < 4m)
+        if (gapToBlocker < 4) {
+            totalDrain *= 0.5; // ประหยัดแรงจากการดูดวิชา
         }
 
-        // 💀 หมดสภาพ (เดิน)
+        next.stamina = Math.max(0, next.stamina - (totalDrain * deltaTime));
+
         if (next.stamina <= 0) {
-            const gutsSurvival = 0.2 + (stats.guts / 5000); 
-            targetSpeed = Math.min(targetSpeed, maxSpeed * gutsSurvival);
+            targetSpeed = Math.min(targetSpeed, maxSpeed * 0.2); // หมดแรงเดิน
         }
     }
 
     // ==========================================
-    // ⚙️ 3. PHYSICS MOVE
+    // ⚙️ 4. PHYSICS
     // ==========================================
-    // เนิน (Uphill) 1000-1200m
-    const isUphill = (next.currentDistance > 1000 && next.currentDistance < 1200);
-    if (isUphill) {
-        const hillResistance = Math.max(0, 0.5 - (stats.power / CONFIG.HILL_RESIST));
-        targetSpeed *= (1 - hillResistance);
-    }
-
-    // Acceleration
     const accel = 5 + (stats.power / 100); 
     if (next.currentSpeed < targetSpeed) {
         next.currentSpeed += accel * deltaTime;
@@ -186,7 +177,4 @@ export const updateHorse = (horse, track, deltaTime = 0.1, leaderDistance = 0, s
 
     return next;
 };
-
-export const sortPositions = (horses) => {
-    return [...horses].sort((a, b) => b.currentDistance - a.currentDistance);
-};
+    export const sortPositions = (horses) => [...horses].sort((a, b) => b.currentDistance - a.currentDistance);

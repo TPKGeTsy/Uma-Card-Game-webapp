@@ -14,6 +14,40 @@ const seedData = async () => {
         await User.deleteMany({});
         console.log("🧹 ล้างข้อมูลเก่าเรียบร้อย...");
 
+
+        // ตัวอย่างการ์ดชุดใหม่ (New Meta)
+const newActionCards = [
+    // --- 🟢 Lane / Positioning (สำคัญมากในระบบใหม่) ---
+    { 
+        name: "Side Step", type: "ACTION", effectType: "LANE_CHANGE", 
+        value: 0, desc: "เปลี่ยนเลนหลบสิ่งกีดขวางทันที", rarity: "N" 
+    },
+    { 
+        name: "Overtake Mode", type: "ACTION", effectType: "LANE_CHANGE_BUFF", 
+        value: 20, desc: "เปลี่ยนเลน + เร่งความเร็วชั่วขณะ", rarity: "SR" 
+    },
+
+    // --- 🔴 Speed / Accel (มีเงื่อนไข) ---
+    { 
+        name: "Slipstream", type: "ACTION", effectType: "SPEED", 
+        value: 40, condition: "BEHIND_CLOSE", desc: "เร่งความเร็วเมื่อจี้ตูด (ระยะ < 5m)", rarity: "R" 
+    },
+    { 
+        name: "Open Road", type: "ACTION", effectType: "SPEED", 
+        value: 60, condition: "NO_BLOCK", desc: "วิ่งเร็วขึ้นเมื่อทางข้างหน้าโล่ง", rarity: "SR" 
+    },
+
+    // --- 💚 Heal (จำเป็นเพื่อความอยู่รอด) ---
+    { 
+        name: "Deep Breath", type: "ACTION", effectType: "HEAL", 
+        value: 200, condition: "ANY", desc: "ฟื้นฟู Stamina ปานกลาง", rarity: "N" 
+    },
+    { 
+        name: "Second Wind", type: "ACTION", effectType: "HEAL", 
+        value: 400, condition: "STAMINA_RED", desc: "ฟื้นฟูมหาศาลเมื่อ Stamina ใกล้หมด", rarity: "SSR" 
+    }
+];
+
         // ==========================================
         // 2. สร้างการ์ด (Card Database)
         // ==========================================
@@ -298,7 +332,7 @@ const seedData = async () => {
             });
         }
 
-        const allCards = [...horses, ...actions, ...training];
+        const allCards = [...horses, ...actions, ...training, ...newActionCards];
         const createdCards = await Card.insertMany(allCards);
         console.log(`✅ สร้างการ์ดเสร็จสิ้น: ${createdCards.length} ใบ`);
 

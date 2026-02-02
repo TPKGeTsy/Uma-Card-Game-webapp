@@ -4,51 +4,29 @@ import { useNavigate, Link } from 'react-router-dom';
 
 function Register() {
   const navigate = useNavigate();
-  const [formData, setFormData] = useState({
-    username: '',
-    password: ''
-  });
-
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
+  const [formData, setFormData] = useState({ username: '', password: '' });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      // ยิงไปที่ Route สมัครสมาชิก
       await axios.post('http://localhost:5000/api/auth/register', formData);
-      
-      alert('สมัครสมาชิกสำเร็จ! กรุณา Login เพื่อเข้าเล่น');
-      navigate('/login'); // สมัครเสร็จ เด้งไปหน้า Login
-
-    } catch (error) {
-      console.error(error);
-      alert('สมัครไม่ผ่าน: ' + (error.response?.data?.message || 'Server Error'));
-    }
+      alert('Success! Please Login');
+      navigate('/login');
+    } catch (error) { alert('Failed'); }
   };
 
   return (
     <div style={styles.container}>
-      <div style={styles.card}>
-        <h1 style={{color: '#2196f3'}}>📝 สมัครสมาชิกใหม่</h1>
-        
+      <div style={styles.box}>
+        <h2 style={styles.title}>CREATE ACCOUNT</h2>
+        <p style={styles.subtitle}>Join the ultimate horse racing battle</p>
         <form onSubmit={handleSubmit}>
-          <div style={styles.inputGroup}>
-            <label>Username</label>
-            <input type="text" name="username" onChange={handleChange} style={styles.input} required />
-          </div>
-          
-          <div style={styles.inputGroup}>
-            <label>Password</label>
-            <input type="password" name="password" onChange={handleChange} style={styles.input} required />
-          </div>
-
-          <button type="submit" style={styles.button}>ยืนยันการสมัคร</button>
+          <input type="text" name="username" placeholder="Username" onChange={(e)=>setFormData({...formData, username:e.target.value})} style={styles.input} required />
+          <input type="password" name="password" placeholder="Password" onChange={(e)=>setFormData({...formData, password:e.target.value})} style={styles.input} required />
+          <button type="submit" style={styles.button}>SIGN UP</button>
         </form>
-
-        <p style={{marginTop: '15px'}}>
-          มีไอดีแล้ว? <Link to="/login" style={{color: '#ff4081'}}>กลับไป Login</Link>
+        <p style={{marginTop:'20px', color:'#aaa', fontSize:'0.9rem'}}>
+          Already have an account? <Link to="/login" style={{color:'#e91e63', fontWeight:'bold', textDecoration:'none'}}>Log In</Link>
         </p>
       </div>
     </div>
@@ -56,11 +34,12 @@ function Register() {
 }
 
 const styles = {
-  container: { display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', backgroundColor: '#f0f2f5' },
-  card: { padding: '30px', borderRadius: '10px', boxShadow: '0 4px 8px rgba(0,0,0,0.1)', backgroundColor: 'white', width: '300px', textAlign: 'center' },
-  inputGroup: { marginBottom: '15px', textAlign: 'left' },
-  input: { width: '100%', padding: '10px', marginTop: '5px', borderRadius: '5px', border: '1px solid #ccc', boxSizing: 'border-box' },
-  button: { width: '100%', padding: '10px', backgroundColor: '#2196f3', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontSize: '16px', fontWeight: 'bold' }
+  container: { display:'flex', justifyContent:'center', alignItems:'center', height:'100vh', background:'#111', fontFamily:"'Inter', sans-serif", color:'white' },
+  box: { padding:'50px', background:'#1e1e1e', borderRadius:'20px', border:'1px solid #333', width:'350px', textAlign:'center', boxShadow:'0 10px 40px rgba(0,0,0,0.5)' },
+  title: { fontSize:'2rem', fontWeight:'900', margin:'0 0 10px', letterSpacing:'1px' },
+  subtitle: { color:'#aaa', marginBottom:'30px', fontSize:'0.9rem' },
+  input: { width:'100%', padding:'15px', marginBottom:'15px', background:'#2a2a2a', border:'1px solid #444', borderRadius:'10px', color:'white', boxSizing:'border-box', outline:'none', fontSize:'1rem' },
+  button: { width:'100%', padding:'15px', background:'linear-gradient(45deg, #00e676, #00bfa5)', color:'white', border:'none', borderRadius:'50px', cursor:'pointer', fontSize:'1rem', fontWeight:'bold', marginTop:'10px', transition:'0.2s' }
 };
 
 export default Register;

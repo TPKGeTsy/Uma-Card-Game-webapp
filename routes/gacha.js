@@ -1,37 +1,61 @@
 const express = require('express');
 const router = express.Router();
 const User = require('../models/User');
-const Card = require('../models/card'); // เช็คชื่อไฟล์ดีๆ
+const Card = require('../models/card'); // ตรวจสอบชื่อไฟล์ Model ให้ตรงกับของคุณ (เช่น Card.js หรือ card.js)
 const authenticateUser = require('../middleware/auth');
 
 router.post('/pull', authenticateUser, async (req, res) => {
     try {
         const userId = req.user.userId;
-        const { cost, poolType } = req.body; // รับ poolType: 'HORSE' หรือ 'ACTION'
+        const { cost, poolType } = req.body; 
+        // poolType รับค่าได้: 'HORSE', 'ACTION', 'TRAINING', หรือ 'ALL'
 
+        // 1. เช็คเงิน User
         const user = await User.findById(userId);
-        if (user.coins < cost) return res.status(400).json({ message: "Coins ไม่พอ!" });
+        if (!user) return res.status(404).json({ message: "User not found" });
+        if (user.coins < cost) return res.status(400).json({ message: "Coins ไม่พอ! ไปฟาร์มมาก่อนนะวัยรุ่น" });
 
-        // หักเงิน
+        // 2. หักเงิน
         user.coins -= cost;
 
-        // เลือกตู้สุ่ม
-        const typeFilter = poolType === 'HORSE' ? 'HORSE' : 'ACTION'; 
-        const allCards = await Card.find({ type: typeFilter });
+        // 3. ตั้งค่า Filter ตามตู้ที่เลือก
+        let filter = {};
+        
+        // ถ้าไม่ใช่ 'ALL' ให้เลือกเฉพาะประเภทนั้น
+        // แต่ถ้าเป็น 'ALL' (หรือค่าอื่นแปลกๆ) ให้ปล่อย filter เป็น {} เพื่อดึงการ์ดทั้งหมด
+        if (poolType && poolType !== 'ALL') {
+            filter.type = poolType; 
+        }
 
-        if (allCards.length === 0) return res.status(500).json({ message: "ตู้ว่างเปล่า!" });
+        // 4. สุ่มการ์ด (ใช้ Aggregation $sample เพื่อประสิทธิภาพที่ดีกว่า Math.random ใน JS)
+        const randomCards = await Card.aggregate([
+            { $match: filter },    // กรองประเภท (ถ้ามี)
+            { $sample: { size: 1 } } // สุ่มมา 1 ใบ
+        ]);
 
-        // สุ่ม (Basic RNG)
-        const randomCard = allCards[Math.floor(Math.random() * allCards.length)];
+        if (randomCards.length === 0) {
+            return res.status(500).json({ message: "ตู้ว่างเปล่า! แอดมินลืมเติมของรึเปล่า?" });
+        }
 
-        // ยัดลงกระเป๋า
-        user.inventory.push({ cardId: randomCard._id, obtainedAt: new Date() });
+        const selectedCard = randomCards[0];
+
+        // 5. ยัดใส่กระเป๋า (Inventory)
+        user.inventory.push({ 
+            cardId: selectedCard._id, 
+            obtainedAt: new Date() 
+        });
+        
         await user.save();
 
-        res.json({ newCoins: user.coins, card: randomCard });
+        // 6. ส่งผลลัพธ์กลับไป
+        res.json({ 
+            newCoins: user.coins, 
+            card: selectedCard 
+        });
 
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        console.error("Gacha Error:", error);
+        res.status(500).json({ message: "Server Error: " + error.message });
     }
 });
 
