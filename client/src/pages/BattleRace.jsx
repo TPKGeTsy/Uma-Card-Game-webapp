@@ -73,6 +73,8 @@ function BattleRace({ team, trackInfo }) {
                     const sorted = [...nextPositions].sort((a,b) => a.finishTime - b.finishTime);
                     setWinner(sorted[0]);
                     addLog(`🏆 ${sorted[0].name} เข้าเส้นชัยเป็นอันดับ 1!`, 'GOLD');
+
+                    handleRaceFinish(sorted);
                 }
                 return nextPositions;
             });
@@ -85,6 +87,25 @@ function BattleRace({ team, trackInfo }) {
             window.lastSpurtAnnounced = false; 
         };
     }, []);
+
+    const handleRaceFinish = async (sortedHorses) => {
+    // หาอันดับของม้าเรา (สมมติม้าเราคือตัวแรก หรือเช็คจาก ID)
+    // ใน Demo นี้สมมติว่าถ้าม้าตัวแรกในทีมเข้าที่ 1 คือเราชนะ
+    const myHorse = team[0]; 
+    const myRank = sortedHorses.findIndex(h => h._id === myHorse._id) + 1;
+
+    try {
+        const token = localStorage.getItem('token');
+        const res = await axios.post('http://localhost:5000/api/user/race-result', 
+            { placement: myRank },
+            { headers: { Authorization: `Bearer ${token}` } }
+        );
+        addLog(`💰 ได้รับรางวัล: ${res.data.newCoins - res.data.coins} G`, 'GOLD'); // คำนวณส่วนต่างเอาเอง หรือใช้ค่าที่ส่งกลับมา
+        alert(`จบการแข่งขัน! คุณได้ที่ ${myRank} \nได้รับเงินรางวัล!`);
+    } catch (err) {
+        console.error("Reward Error", err);
+    }
+};
 
     // ==========================================
     // 3. PLAYER ACTIONS (MANUAL & SKILL)
@@ -263,6 +284,7 @@ function BattleRace({ team, trackInfo }) {
                     </div>
                 ))}
             </div>
+            
 
             {/* ==========================================
                 🎮 CONTROLS (Manual & Skills)

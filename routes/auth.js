@@ -4,7 +4,6 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const authenticateUser = require('../middleware/auth'); 
-
 const JWT_SECRET = 'mysecretkey123';
 
 // 📝 Register

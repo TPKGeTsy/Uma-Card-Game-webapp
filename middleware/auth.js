@@ -1,35 +1,30 @@
 const jwt = require('jsonwebtoken');
 
-module.exports = (req, res, next) => {
+// 🔥 ต้องตรงกับใน routes/auth.js เป๊ะๆ
+const JWT_SECRET = 'mysecretkey123'; 
+
+const authenticateUser = (req, res, next) => {
+    // 1. ดึง Token จาก Header
+    const authHeader = req.header('Authorization');
+    
+    if (!authHeader) {
+        return res.status(401).json({ message: "No token, authorization denied" });
+    }
+
+    // ตัดคำว่า "Bearer " ออก
+    const token = authHeader.replace('Bearer ', '');
+
     try {
-        // 1. ดึง Header ที่ชื่อ Authorization ออกมา
-        const authHeader = req.headers.authorization;
-
-        // ถ้าไม่มี Header ส่งมาเลย -> ไล่กลับ
-        if (!authHeader) {
-            return res.status(401).json({ message: "Access Denied: ไม่พบ Token!" });
-        }
-
-        // 2. ตัดคำว่า "Bearer " ออก เพื่อเอาตัว Token เพียวๆ
-        // รูปแบบที่ส่งมาคือ: "Bearer eyJhbGciOi..."
-        const token = authHeader.split(' ')[1]; 
-
-        if (!token) {
-            return res.status(401).json({ message: "Access Denied: Token ผิดรูปแบบ!" });
-        }
-
-        // 3. 🗝️ ตรวจสอบด้วยกุญแจ 'secret' (ต้องตรงกับ authController.js เป๊ะๆ!)
-        // ⚠️ ของเดิมคุณเป็น 'MySuperSecretKey' ซึ่งมันผิดครับ
-        const verified = jwt.verify(token, 'secret'); 
-
-        // 4. แปะข้อมูล User ลงไปใน Request
-        req.user = verified;
+        // 2. ตรวจสอบ Token (ด้วยกุญแจดอกเดียวกัน)
+        const decoded = jwt.verify(token, JWT_SECRET);
         
-        next(); // ผ่าน!
-
+        // 3. ถ้าผ่าน ให้ยัด userId ใส่ req ไว้ใช้ต่อ
+        req.user = decoded; 
+        next();
     } catch (err) {
-        // ถ้ากุญแจผิด หรือ Token หมดอายุ จะเด้งเข้าตรงนี้
-        console.log("Middleware Error:", err.message);
-        res.status(400).json({ message: "Invalid Token: Token ใช้ไม่ได้ครับ" });
+        console.error("Auth Error:", err.message);
+        res.status(401).json({ message: "Token is not valid" });
     }
 };
+
+module.exports = authenticateUser;
