@@ -7,6 +7,7 @@ const Card = require('../models/card'); // หรือ require('../models/Card'
 const TrainingCard = require('../models/TrainingCard');
 const ActionCard = require('../models/ActionCard');
 const Track = require('../models/Track');
+const checkAdmin = require('../middleware/checkAdmin');
 
 // --- 1. ตั้งค่าการอัปโหลดรูป (Multer Config) ---
 const storage = multer.diskStorage({
@@ -24,7 +25,7 @@ const storage = multer.diskStorage({
 const upload = multer({ storage: storage });
 
 // --- 2. API: CREATE (เพิ่มข้อมูลพร้อมรูป) ---
-router.post('/add-card', upload.single('imageFile'), async (req, res) => {
+router.post('/add-card', upload.single('imageFile'), checkAdmin, async (req, res) => {
     try {
         const { type, ...data } = req.body; // type = HORSE, TRAINING, ACTION, TRACK
         let newCard;
@@ -92,7 +93,7 @@ router.get('/all-cards', async (req, res) => {
 });
 
 // --- 4. API: UPDATE (แก้ไขข้อมูล) ---
-router.put('/update-card/:id', upload.single('imageFile'), async (req, res) => {
+router.put('/update-card/:id', upload.single('imageFile'), checkAdmin, async (req, res) => {
     try {
         const { id } = req.params;
         const { collectionType, ...updateTextData } = req.body;
@@ -122,7 +123,7 @@ router.put('/update-card/:id', upload.single('imageFile'), async (req, res) => {
 });
 
 // --- 5. API: DELETE (ลบข้อมูล) ---
-router.delete('/delete-card/:id', async (req, res) => {
+router.delete('/delete-card/:id', checkAdmin, async (req, res) => {
     try {
         const { id } = req.params;
         const { collectionType } = req.query;

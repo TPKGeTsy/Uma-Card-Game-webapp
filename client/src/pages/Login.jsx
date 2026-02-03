@@ -11,10 +11,26 @@ function Login() {
     e.preventDefault();
     try {
       const res = await axios.post('http://localhost:5000/api/auth/login', { username, password });
+      
+      // 1. เก็บข้อมูลลงเครื่อง
       localStorage.setItem('token', res.data.token);
       localStorage.setItem('username', res.data.username);
-      navigate('/home'); 
-    } catch (err) { alert("Login Failed"); }
+      
+      // ✅ 2. เก็บสถานะ Admin (แปลง boolean เป็น string)
+      localStorage.setItem('isAdmin', res.data.isAdmin ? 'true' : 'false');
+
+      alert("Login สำเร็จ! ยินดีต้อนรับ " + res.data.username);
+
+      // ✅ 3. เช็คว่าเป็น Admin ไหม?
+      if (res.data.isAdmin) {
+          navigate('/admin'); // ถ้าใช่ ไปหลังบ้าน
+      } else {
+          navigate('/home');  // ถ้าไม่ใช่ ไปหน้าเกม
+      }
+
+    } catch (err) { 
+      alert("Login Failed: " + (err.response?.data?.message || err.message)); 
+    }
   };
 
   return (

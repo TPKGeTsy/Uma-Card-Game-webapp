@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-
+import AdminRoute from "./components/AdminRoute";
 // Import หน้าจอต่างๆ
 import Login from './pages/Login';
 import Register from './pages/Register';
@@ -9,10 +9,13 @@ import Inventory from './pages/Inventory';
 import Battle from './pages/Battle';
 import Admin from './pages/Admin';
 
+// Import ตัวเช็คสิทธิ์ (Guard)
+
+
 function App() {
   return (
     <BrowserRouter>
-      <div style={{ padding: '20px', fontFamily: 'Arial' }}>
+      <div style={{ padding: '0', fontFamily: 'Arial' }}> {/* ลบ padding ออกเพื่อให้ Full Screen สวยๆ */}
         <Routes>
           {/* Redirect หน้าแรกไป Login */}
           <Route path="/" element={<Navigate to="/login" />} />
@@ -20,14 +23,17 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           
+          {/* โซน User ทั่วไป */}
           <Route path="/home" element={<Home />} />
           <Route path="/gacha" element={<Gacha />} />
           <Route path="/inventory" element={<Inventory />} />
-          
-          {/* ✅ ต้องมีบรรทัดนี้ครับ ถึงจะเข้าหน้า Battle ได้ */}
           <Route path="/battle" element={<Battle />} />
           
-          <Route path="/admin" element={<Admin />} />
+          {/* 🔒 โซน Admin (ต้องผ่าน AdminRoute ก่อนถึงจะเจอ) */}
+          <Route element={<AdminRoute />}>
+              <Route path="/admin" element={<Admin />} />
+          </Route>
+
         </Routes>
       </div>
     </BrowserRouter>
