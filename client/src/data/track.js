@@ -1,47 +1,33 @@
 export const TRACKS = [
     {
-        id: 'tokyo_2400',
-        name: 'Tokyo Racecourse (Japan Cup)',
-        distance: 2400,
-        image: '/images/tracks/tokyo.png',
-        description: "ทางตรงยาว 525 เมตร วัดกันที่ความเร็วปลาย!",
-        weatherOptions: ['Sunny', 'Sunny', 'Rain'],
-        // 📍 จุดสำคัญในสนามจริง (อิงตามแผนที่)
-        landmarks: [
-            { distance: 350, name: "Corner 1 (โค้งแรก)" },
-            { distance: 700, name: "Corner 2 (เข้าทางตรงหลัง)" },
-            { distance: 1000, name: "Great Zelkova (ต้นยักษ์)" }, // จุดดังของโตเกียว
-            { distance: 1400, name: "Corner 3 (โค้งมรณะ)" },
-            { distance: 1800, name: "Corner 4 (โค้งสุดท้าย)" },
-            { distance: 1900, name: "Final Straight (เข้าทางตรง)" },
-            { distance: 2200, name: "Uphill (เนินวัดใจ)" }
-        ],
-        gimmick: {
-            requiredStat: "SPEED",
-            threshold: 800,
-            bonus: 1.1
-        }
+        id: 1,
+        name: "Tokyo Racecourse",
+        distance: 2000,
+        image:  '/images/tracks/tokyo.png',
+        description: "สนามแข่งมาตรฐาน มีทางตรงยาวและโค้งกว้าง",
+        weatherOptions: ["Sunny", "Rainy"],
+        // ✅ เพิ่ม Segments: กำหนดช่วงของสนาม (รวมกันต้องได้ distance)
+        segments: [
+            { type: 'STRAIGHT', length: 400 }, // 0-400m: ออกตัวทางตรง
+            { type: 'CURVE',    length: 600 }, // 400-1000m: โค้งแรก
+            { type: 'STRAIGHT', length: 400 }, // 1000-1400m: ทางตรงยาว
+            { type: 'CURVE',    length: 400 }, // 1400-1800m: โค้งสุดท้าย
+            { type: 'STRAIGHT', length: 200 }  // 1800-2000m: ทางตรงเข้าเส้นชัย
+        ]
     },
     {
-        id: 'nakayama_2500',
-        name: 'Nakayama Racecourse (Arima Kinen)',
+        id: 2,
+        name: "Nakayama Racecourse",
         distance: 2500,
-        image: '/images/tracks/nakayama.png',
-        description: "โค้งเยอะ ทางตรงสั้น และเนินนรกหน้าเส้นชัย",
-        weatherOptions: ['Sunny', 'Cloudy', 'Snow'],
-        // 📍 จุดสำคัญในสนามจริง
-        landmarks: [
-            { distance: 400, name: "First Curve (โค้งแรก)" },
-            { distance: 800, name: "Grandstand (หน้าอัฒจันทร์)" },
-            { distance: 1100, name: "Corner 1 (รอบสอง)" },
-            { distance: 1600, name: "Backstretch (ทางตรงหลัง)" },
-            { distance: 2100, name: "Final Corner (โค้งตัดสิน)" },
-            { distance: 2300, name: "Heartbreak Hill (เนินนรก)" }
-        ],
-        gimmick: {
-            requiredStat: "GUTS",
-            threshold: 700,
-            bonus: "IGNORE_TERRAIN"
-        }
+        image:'/images/tracks/nakayama.png',
+        description: "สนามวัดใจ ทางโค้งเยอะและมีเนินชัน",
+        weatherOptions: ["Cloudy", "Snowy"],
+        segments: [
+            { type: 'STRAIGHT', length: 300 },
+            { type: 'CURVE',    length: 800 },
+            { type: 'SLOPE',    length: 400 }, // เนินเขา (กิน Stamina เยอะ)
+            { type: 'CURVE',    length: 600 },
+            { type: 'STRAIGHT', length: 400 }
+        ]
     }
 ];

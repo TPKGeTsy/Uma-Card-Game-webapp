@@ -5,11 +5,11 @@ import { TRACKS } from '../data/track';
 
 import BattleRace from './BattleRace';
 
-// ✅ แก้ไข 1: เปลี่ยนชื่อ DRAFT เป็น DECK_SELECT ให้ตรงกับที่เรียกใช้
+// ✅ Phase Constants
 const PHASES = { LOAD: 0, SETUP: 1, DECK_SELECT: 2, ALLOCATE: 3, RACE: 4, RESULT: 5 };
 
 // ==========================================
-// 🧩 SUB-COMPONENT: BATTLE SETUP (Phase 1)
+// 🧩 SUB-COMPONENT: BATTLE SETUP (แก้ Dropdown ตกขอบ)
 // ==========================================
 function BattleSetup({ onConfirmTeam, trackInfo, triggerPoints, inventoryHorses, inventoryActions }) {
     const [myTeam, setMyTeam] = useState([]);
@@ -52,6 +52,7 @@ function BattleSetup({ onConfirmTeam, trackInfo, triggerPoints, inventoryHorses,
                 <div style={setupStyles.trackInfoBox}>
                      <div style={{color:'#d32f2f', fontWeight:'bold', border:'1px dashed red', padding:'10px', borderRadius:'8px', background:'rgba(255, 235, 238, 0.9)'}}>
                         ⚡ จุดใช้สกิล (Trigger Points)<br/><span style={{fontSize:'1.1rem'}}>{triggerPoints.join('m ➜ ')}m</span>
+                        <div style={{fontSize:'0.7rem', color:'#555', marginTop:'5px'}}>(สุ่ม 3-5 จุด)</div>
                     </div>
                     <div style={{marginTop:'15px', color:'#eee', fontSize:'0.9rem'}}>🎒 การ์ด Action ใน Deck: <b>{inventoryActions.length}</b> ใบ</div>
                 </div>
@@ -67,20 +68,29 @@ function BattleSetup({ onConfirmTeam, trackInfo, triggerPoints, inventoryHorses,
                             return (
                                 <div key={index} style={setupStyles.slotBox}>
                                     {horse ? (
-                                        <div style={{width:'100%', height:'100%', display:'flex', flexDirection:'column', alignItems:'center'}}>
+                                        <>
                                             <img src={horse.image} style={setupStyles.slotImg} />
                                             <button onClick={()=>toggleSelectHorse(horse)} style={setupStyles.removeBtn}>✕</button>
+                                            
+                                            {/* ชื่อม้า */}
                                             <div style={setupStyles.slotNameBox}>{horse.name}</div>
-                                            <select 
-                                                value={horse.strategy} 
-                                                onChange={(e) => changeStrategy(horse._id, e.target.value)}
-                                                style={{...setupStyles.strategySelect, border: `2px solid ${STRATEGIES[horse.strategy].color}`}}
-                                            >
-                                                {Object.keys(STRATEGIES).map(key => (<option key={key} value={key}>{STRATEGIES[key].label}</option>))}
-                                            </select>
-                                        </div>
+                                            
+                                            {/* ✅ แก้ไข: Dropdown Wrapper ป้องกันตกขอบ */}
+                                            <div style={{width:'100%', marginTop:'auto'}}>
+                                                <select 
+                                                    value={horse.strategy} 
+                                                    onChange={(e) => changeStrategy(horse._id, e.target.value)}
+                                                    style={{
+                                                        ...setupStyles.strategySelect, 
+                                                        borderTop: `3px solid ${STRATEGIES[horse.strategy].color}`
+                                                    }}
+                                                >
+                                                    {Object.keys(STRATEGIES).map(key => (<option key={key} value={key}>{STRATEGIES[key].label}</option>))}
+                                                </select>
+                                            </div>
+                                        </>
                                     ) : (
-                                        <div style={{color:'#555', fontSize:'2rem'}}>+</div>
+                                        <div style={{color:'#555', fontSize:'2rem', marginTop:'auto', marginBottom:'auto'}}>+</div>
                                     )}
                                 </div>
                             )
@@ -118,7 +128,7 @@ function BattleSetup({ onConfirmTeam, trackInfo, triggerPoints, inventoryHorses,
 // ==========================================
 function BattleDeckSelect({ inventoryActions, onDeckComplete }) {
     const [selectedCards, setSelectedCards] = useState([]);
-    const MAX_CARDS = 6; // ให้เลือกได้ 6 ใบ
+    const MAX_CARDS = 6; 
 
     const toggleCard = (card) => {
         if (selectedCards.find(c => c._id === card._id)) {
@@ -135,12 +145,10 @@ function BattleDeckSelect({ inventoryActions, onDeckComplete }) {
             <h2 style={{fontSize:'2rem', textShadow:'0 0 10px #2196f3'}}>🎴 Phase 2: Deck Selection</h2>
             <p style={{color:'#aaa'}}>เลือกการ์ด Action เพื่อนำไปใช้ในการแข่ง (Max {MAX_CARDS})</p>
             
-            {/* Status Bar */}
             <div style={{margin:'20px auto', background:'#333', padding:'10px', borderRadius:'10px', width:'fit-content'}}>
                 Selected: <span style={{color:'#2196f3', fontWeight:'bold', fontSize:'1.2rem'}}>{selectedCards.length}</span> / {MAX_CARDS}
             </div>
 
-            {/* ปุ่ม Confirm */}
             <button 
                 onClick={() => onDeckComplete(selectedCards)}
                 disabled={selectedCards.length === 0}
@@ -153,7 +161,7 @@ function BattleDeckSelect({ inventoryActions, onDeckComplete }) {
                 CONFIRM DECK ✅
             </button>
 
-            {/* Grid การ์ด */}
+            {/* Grid การ์ดแบบเต็มใบ */}
             <div style={{display:'flex', justifyContent:'center', gap:'15px', flexWrap:'wrap', maxHeight:'60vh', overflowY:'auto', padding:'10px'}}>
                 {inventoryActions.map((card) => {
                     const isSelected = selectedCards.find(c => c._id === card._id);
@@ -162,24 +170,29 @@ function BattleDeckSelect({ inventoryActions, onDeckComplete }) {
                             key={card._id} 
                             onClick={() => toggleCard(card)}
                             style={{
-                                width:'140px', height:'200px', 
-                                background: isSelected ? '#1e3a2a' : '#2a2a2a', 
-                                border: isSelected ? '3px solid #00e676' : '2px solid #555', 
+                                width:'130px', height:'190px', 
+                                background: isSelected ? '#1e3a2a' : '#252525', 
+                                border: isSelected ? '2px solid #00e676' : '1px solid #444', 
                                 borderRadius:'10px', cursor:'pointer', padding:'10px', 
                                 display:'flex', flexDirection:'column', justifyContent:'space-between',
                                 transform: isSelected ? 'scale(1.05)' : 'scale(1)',
-                                transition: 'all 0.2s', boxShadow: '0 4px 10px rgba(0,0,0,0.5)'
+                                transition: 'all 0.2s', boxShadow: isSelected ? '0 0 15px rgba(0,230,118,0.4)' : 'none'
                             }}
                         >
-                            <div style={{alignSelf:'flex-start', padding:'2px 6px', background:'#e91e63', borderRadius:'4px', fontSize:'0.6rem', color:'white'}}>{card.type}</div>
-                            <div style={{fontWeight:'bold', fontSize:'0.9rem', margin:'5px 0'}}>{card.name}</div>
-                            {/* รูปการ์ด (ถ้ามี) */}
-                            <img src={card.image} style={{width:'100%', height:'80px', objectFit:'cover', borderRadius:'5px'}} onError={(e)=>e.target.src='https://placehold.co/100'}/>
+                            <div style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
+                                <span style={{fontSize:'0.6rem', background:'#e91e63', padding:'2px 5px', borderRadius:'4px', color:'white'}}>{card.type}</span>
+                                {isSelected && <span style={{color:'#00e676', fontWeight:'bold'}}>✓</span>}
+                            </div>
                             
-                            <div style={{fontSize:'0.7rem', color:'#ccc', marginTop:'5px'}}>{card.desc || "No description"}</div>
+                            <img src={card.image} style={{width:'100%', height:'80px', objectFit:'cover', borderRadius:'5px', margin:'5px 0'}} onError={(e)=>e.target.src='https://placehold.co/100'}/>
                             
-                            <div style={{fontSize:'0.75rem', color: isSelected?'#00e676':'#aaa', fontWeight:'bold', marginTop:'auto'}}>
-                                {isSelected ? 'SELECTED' : 'SELECT'}
+                            <div>
+                                <div style={{fontSize:'0.8rem', fontWeight:'bold', color:'white', marginBottom:'2px'}}>{card.name}</div>
+                                <div style={{fontSize:'0.6rem', color:'#aaa', lineHeight:'1.2', height:'2.4em', overflow:'hidden'}}>{card.description || "No description"}</div>
+                            </div>
+                            
+                            <div style={{fontSize:'0.7rem', color: isSelected?'#00e676':'#666', fontWeight:'bold', marginTop:'auto', borderTop:'1px solid #333', paddingTop:'5px'}}>
+                                {isSelected ? 'SELECTED' : 'CLICK TO ADD'}
                             </div>
                         </div>
                     )
@@ -192,7 +205,6 @@ function BattleDeckSelect({ inventoryActions, onDeckComplete }) {
 // ==========================================
 // 🛠️ SUB-COMPONENT: BATTLE ALLOCATE (Phase 3)
 // ==========================================
-// ✅ แก้ไข 2: เปลี่ยนชื่อตัวรับ prop จาก draftedCards เป็น deckCards ให้ตรงกับที่ส่งมา
 function BattleAllocate({ team, deckCards, onAllocateComplete }) {
     const [allocations, setAllocations] = useState({});
     const [selectedCard, setSelectedCard] = useState(null);
@@ -266,51 +278,31 @@ function BattleAllocate({ team, deckCards, onAllocateComplete }) {
                                 flexDirection: 'row'
                             }}
                         >
-                            {/* 🖼️ BOX 1: ฝั่งซ้าย (รูปม้า) */}
                             <div style={{width: '160px', position: 'relative', borderRight: '1px solid #444'}}>
-                                <img src={horse.image} style={{width:'100%', height:'100%', objectFit:'cover', objectPosition:'top center'}} />
-                                <div style={{
-                                    position:'absolute', bottom:0, width:'100%', 
-                                    background:'rgba(0,0,0,0.85)', color:'white', 
-                                    fontWeight:'bold', fontSize:'0.9rem', padding:'5px 0',
-                                    textAlign: 'center'
-                                }}>
+                                <img src={horse.image} style={{width:'100%', height:'100%', objectFit:'cover', objectPosition:'top center'}} onError={(e)=>e.target.src='https://placehold.co/100'}/>
+                                <div style={{position:'absolute', bottom:0, width:'100%', background:'rgba(0,0,0,0.85)', color:'white', fontWeight:'bold', fontSize:'0.9rem', padding:'5px 0', textAlign: 'center'}}>
                                     {horse.name}
                                 </div>
                             </div>
 
-                            {/* 📊 BOX 2: ฝั่งขวา (Stats & Cards) */}
                             <div style={{flex: 1, display: 'flex', flexDirection: 'column', padding: '10px'}}>
-                                
-                                {/* ตาราง Stats */}
                                 <div style={{flex: 1, display:'grid', gridTemplateColumns:'1fr 1fr', gap:'2px 15px', alignContent: 'center'}}>
                                     {['speed','stamina','power','guts','wisdom'].map(stat => (
                                         <div key={stat} style={{display:'flex', justifyContent:'space-between', borderBottom:'1px solid #333', paddingBottom:'2px', fontSize:'0.85rem'}}>
                                             <span style={{textTransform:'capitalize', color:'#aaa'}}>{stat.slice(0,3)}</span>
                                             <span>
                                                 {base[stat]}
-                                                {bonus[stat] !== 0 && (
-                                                    <span style={{color: bonus[stat]>0 ? '#00e676':'red', marginLeft:'5px', fontWeight:'bold'}}>
-                                                        ({bonus[stat]>0?'+':''}{bonus[stat]})
-                                                    </span>
-                                                )}
+                                                {bonus[stat] !== 0 && (<span style={{color: bonus[stat]>0 ? '#00e676':'red', marginLeft:'5px', fontWeight:'bold'}}>({bonus[stat]>0?'+':''}{bonus[stat]})</span>)}
                                             </span>
                                         </div>
                                     ))}
                                 </div>
-
-                                {/* ช่องใส่การ์ด (ด้านล่างขวา) */}
                                 <div style={{marginTop:'auto', paddingTop:'8px', borderTop:'1px solid #444'}}>
                                     <div style={{fontSize:'0.7rem', color:'#777', marginBottom:'4px', textAlign:'left'}}>Cards:</div>
                                     <div style={{display:'flex', gap:'5px', overflowX: 'auto'}}>
                                         {equipped.length === 0 && <span style={{fontSize:'0.7rem', color:'#444'}}>Empty..</span>}
                                         {equipped.map((c, i) => (
-                                            <div key={i} style={{
-                                                fontSize:'0.6rem', padding:'2px 6px', 
-                                                background:'#333', borderRadius:'4px', 
-                                                border: '1px solid #00e676', color: '#00e676',
-                                                whiteSpace: 'nowrap'
-                                            }}>
+                                            <div key={i} style={{fontSize:'0.6rem', padding:'2px 6px', background:'#333', borderRadius:'4px', border: '1px solid #00e676', color: '#00e676', whiteSpace: 'nowrap'}}>
                                                 {c.name.slice(0,8)}..
                                             </div>
                                         ))}
@@ -322,19 +314,14 @@ function BattleAllocate({ team, deckCards, onAllocateComplete }) {
                 })}
             </div>
 
-            {/* การ์ดในมือ */}
             <div style={{background:'#222', padding:'20px', borderRadius:'15px', border:'1px solid #444'}}>
                 <h4 style={{marginTop:0, color:'#ddd'}}>Your Deck ({deckCards.length})</h4>
                 <div style={{display:'flex', justifyContent:'center', gap:'15px', flexWrap:'wrap'}}>
-                    {/* ✅ แก้ไข 3: ใช้ deckCards.map แทน draftedCards.map */}
                     {deckCards.map(card => {
                         const ownerId = Object.keys(allocations).find(hid => allocations[hid].find(c => c._id === card._id));
                         const isSelected = selectedCard?.id === card._id;
-                        
                         return (
-                            <div 
-                                key={card._id}
-                                onClick={() => handleCardClick(card)}
+                            <div key={card._id} onClick={() => handleCardClick(card)}
                                 style={{
                                     width:'120px', height:'160px', 
                                     background: isSelected ? '#1e3a2a' : '#333',
@@ -346,24 +333,14 @@ function BattleAllocate({ team, deckCards, onAllocateComplete }) {
                             >
                                 <div style={{fontSize:'0.8rem', fontWeight:'bold', color: isSelected?'#00e676':'white'}}>{card.name}</div>
                                 <div style={{fontSize:'0.7rem', color:'#aaa'}}>{card.desc}</div>
-                                <div style={{fontSize:'0.75rem', color:'#00e676', fontWeight:'bold'}}>
-                                    {/* แสดง effect แบบย่อ */}
-                                    {card.effectType} {card.value > 0 ? `+${card.value}` : ''}
-                                </div>
+                                <div style={{fontSize:'0.75rem', color:'#00e676', fontWeight:'bold'}}>{card.effectType} {card.value > 0 ? `+${card.value}` : ''}</div>
                             </div>
                         )
                     })}
                 </div>
             </div>
 
-            <button 
-                onClick={() => onAllocateComplete(allocations)}
-                style={{
-                    marginTop:'30px', padding:'15px 50px', fontSize:'1.2rem', 
-                    background:'linear-gradient(45deg, #e91e63, #ff4081)', border:'none', 
-                    borderRadius:'50px', color:'white', fontWeight:'bold', cursor:'pointer'
-                }}
-            >
+            <button onClick={() => onAllocateComplete(allocations)} style={{marginTop:'30px', padding:'15px 50px', fontSize:'1.2rem', background:'linear-gradient(45deg, #e91e63, #ff4081)', border:'none', borderRadius:'50px', color:'white', fontWeight:'bold', cursor:'pointer'}}>
                 START RACE 🏁
             </button>
         </div>
@@ -383,7 +360,7 @@ function Battle() {
   const [myInventoryHorses, setMyInventoryHorses] = useState([]);
   const [myInventoryActions, setMyInventoryActions] = useState([]); 
   const [myTeam, setMyTeam] = useState([]);
-  const [selectedDeck, setSelectedDeck] = useState([]); // ✅ เก็บการ์ดที่เลือกจาก Deck
+  const [selectedDeck, setSelectedDeck] = useState([]);
 
   useEffect(() => {
     fetchUserData();
@@ -392,16 +369,7 @@ function Battle() {
 
   const fetchUserData = async () => {
     try {
-        if (!token) {
-            // Mock Data สำหรับ Test
-            setMyInventoryHorses([
-                { _id: 'm1', name: "Mock Week", rarity: "N", image: "https://placehold.co/100", stats: { speed: 600 } },
-                { _id: 'm2', name: "Mock Suzuka", rarity: "SSR", image: "https://placehold.co/100", stats: { speed: 1000 } }
-            ]);
-            setMyInventoryActions([]);
-            setPhase(PHASES.SETUP);
-            return;
-        }
+        if (!token) return navigate('/login');
         const res = await axios.get('http://localhost:5000/api/user/inventory', { headers: { Authorization: `Bearer ${token}` } });
         setMyInventoryHorses(res.data.filter(i => i.cardId?.type === 'HORSE').map(i => i.cardId));
         setMyInventoryActions(res.data.filter(i => i.cardId?.type === 'ACTION').map(i => i.cardId));
@@ -415,57 +383,46 @@ function Battle() {
       const weather = selectedTrack.weatherOptions ? selectedTrack.weatherOptions[Math.floor(Math.random() * selectedTrack.weatherOptions.length)] : "Sunny";
       setTrackInfo({ ...selectedTrack, weather });
       
-      let availablePoints = selectedTrack.landmarks ? [...selectedTrack.landmarks] : [];
-      if (availablePoints.length > 0) {
-          const minPoints = 3; const maxPoints = availablePoints.length;
-          const countToPick = Math.floor(Math.random() * (maxPoints - minPoints + 1)) + minPoints;
-          let pickedPoints = availablePoints.sort(() => 0.5 - Math.random()).slice(0, countToPick).map(l => l.distance).sort((a, b) => a - b);
-          setTriggerPoints(pickedPoints.map(dist => Math.max(0, Math.min(dist + (Math.floor(Math.random() * 101) - 50), selectedTrack.distance))));
-      } else { setTriggerPoints([500, 1000, 1500]); }
-  };
-
-  const handleSetupConfirm = (team) => {
-      setMyTeam(team);
-      setPhase(PHASES.DECK_SELECT); // ไปหน้าเลือก Deck
-  };
-
-  const handleDeckComplete = (cards) => {
-      setSelectedDeck(cards);
-      setPhase(PHASES.ALLOCATE); // ไปหน้าแจกการ์ด
-  };
-
-  const handleAllocateComplete = (allocations) => {
-      const readyTeam = myTeam.map(horse => {
-          const equipped = allocations[horse._id] || [];
-          const finalStats = { ...horse.stats };
-          return { ...horse, equippedCards: equipped, finalStats };
-      });
-
-      console.log("🚀 TEAM READY:", readyTeam);
-      setMyTeam(readyTeam);
-      setPhase(PHASES.RACE);
+      let landmarks = selectedTrack.landmarks || [];
+      if (landmarks.length > 0) {
+          // 1. สุ่มจำนวนจุด (3 ถึง 5)
+          const minPoints = 3;
+          const maxPoints = Math.min(5, landmarks.length);
+          const count = Math.floor(Math.random() * (maxPoints - minPoints + 1)) + minPoints;
+          
+          // 2. สุ่มหยิบและเรียงลำดับ
+          const picked = [...landmarks].sort(() => 0.5 - Math.random()).slice(0, count).sort((a, b) => a.distance - b.distance);
+          
+          // 3. ใส่ Variation (+- 50m)
+          const variedPoints = picked.map(p => {
+              const variation = Math.floor(Math.random() * 101) - 50; 
+              return Math.max(0, Math.min(p.distance + variation, selectedTrack.distance));
+          });
+          setTriggerPoints(variedPoints);
+      } else {
+          setTriggerPoints([500, 1000, 1500]); 
+      }
   };
 
   return (
     <div style={{minHeight:'100vh', background:'#111', padding:'20px', fontFamily:'Arial'}}>
         {phase === PHASES.SETUP && (
-            <BattleSetup onConfirmTeam={handleSetupConfirm} trackInfo={trackInfo} triggerPoints={triggerPoints} inventoryHorses={myInventoryHorses} inventoryActions={myInventoryActions} />
+            <BattleSetup onConfirmTeam={(t) => { setMyTeam(t); setPhase(PHASES.DECK_SELECT); }} trackInfo={trackInfo} triggerPoints={triggerPoints} inventoryHorses={myInventoryHorses} inventoryActions={myInventoryActions} />
         )}
         
-        {/* ✅ Phase ใหม่: เลือก Deck */}
         {phase === PHASES.DECK_SELECT && (
-            <BattleDeckSelect inventoryActions={myInventoryActions} onDeckComplete={handleDeckComplete} />
+            <BattleDeckSelect inventoryActions={myInventoryActions} onDeckComplete={(d) => { setSelectedDeck(d); setPhase(PHASES.ALLOCATE); }} />
         )}
 
         {phase === PHASES.ALLOCATE && (
-            <BattleAllocate team={myTeam} deckCards={selectedDeck} onAllocateComplete={handleAllocateComplete} />
+            <BattleAllocate team={myTeam} deckCards={selectedDeck} onAllocateComplete={(a) => {
+                setMyTeam(myTeam.map(h => ({ ...h, equippedCards: a[h._id] || [], finalStats: { ...h.stats } })));
+                setPhase(PHASES.RACE);
+            }} />
         )}
 
         {phase === PHASES.RACE && (
-            <BattleRace 
-                team={myTeam}          
-                trackInfo={trackInfo}  
-            />
+            <BattleRace team={myTeam} trackInfo={trackInfo} triggerPoints={triggerPoints} />
         )}
 
         {phase === PHASES.LOAD && <div style={{color:'white', textAlign:'center', marginTop:'50px'}}>กำลังเตรียมสนามแข่ง... 🏇</div>}
@@ -473,6 +430,7 @@ function Battle() {
   );
 }
 
+// 🎨 STYLES (แก้ Box Sizing แล้ว)
 const setupStyles = {
     container: { display: 'flex', gap: '20px', height: '85vh', maxWidth: '1200px', margin: '0 auto', padding: '20px', boxSizing: 'border-box', alignItems: 'stretch' },
     leftPanel: { flex: 1.2, display: 'flex', flexDirection: 'column', gap: '15px', background: '#1a1a1a', borderRadius: '15px', padding: '10px', border: '1px solid #333' },
@@ -484,11 +442,25 @@ const setupStyles = {
     teamSlotsContainer: { background: '#2a2a2a', padding: '10px', borderRadius: '15px', boxShadow: '0 4px 10px rgba(0,0,0,0.3)', textAlign: 'center', border: '1px solid #333' },
     slotsFlex: { display: 'flex', justifyContent: 'space-between', gap: '8px', marginBottom: '10px' },
     
-    // 🔥 Phase 1 Styles
+    // 🔥 แก้ CSS SlotBox ตรงนี้
     slotBox: { width: '32%', height: '200px', background: '#333', borderRadius: '8px', border: '2px dashed #555', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start', position: 'relative', overflow: 'hidden' },
     slotImg: { width: '100%', flex: 1, minHeight: 0, objectFit: 'cover', objectPosition: 'top center', borderBottom: '1px solid #444' },
     slotNameBox: { width: '100%', background: 'rgba(0,0,0,0.8)', padding: '4px 0', fontSize: '0.75rem', fontWeight: 'bold', color: 'white', zIndex: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' },
-    strategySelect: { width: '100%', padding: '4px', borderRadius: '0', fontSize: '0.75rem', background: '#222', color: '#fff', cursor: 'pointer', textAlign: 'center', border: 'none', borderTop: '1px solid #555' },
+    
+    // ✅ เพิ่ม boxSizing และ appearance ให้ Dropdown
+    strategySelect: { 
+        width: '100%', 
+        padding: '5px', 
+        borderRadius: '0', 
+        fontSize: '0.75rem', 
+        background: '#222', 
+        color: '#fff', 
+        cursor: 'pointer', 
+        textAlign: 'center', 
+        border: 'none',
+        boxSizing: 'border-box' // สำคัญมาก ป้องกันตกขอบ
+    },
+    
     removeBtn: { position: 'absolute', top: 0, right: 0, background: 'rgba(211, 47, 47, 0.9)', color: 'white', border: 'none', cursor: 'pointer', width: '24px', height: '24px', fontSize: '1rem', borderBottomLeftRadius: '5px', zIndex: 10 },
     confirmBtn: { width: '100%', padding: '10px', background: 'linear-gradient(45deg, #e91e63, #ff4081)', color: 'white', border: 'none', borderRadius: '8px', fontSize: '1rem', fontWeight: 'bold', textTransform: 'uppercase', boxShadow: '0 4px 15px rgba(233, 30, 99, 0.4)' },
     inventoryContainer: { flex: 1, overflowY: 'auto', background: '#1a1a1a', padding: '10px', borderRadius: '15px', border: '1px solid #333' },
