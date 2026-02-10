@@ -1,8 +1,37 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react'; // ✅ เพิ่ม hooks
 import { useNavigate } from 'react-router-dom';
 
 function Home() {
     const navigate = useNavigate();
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
+    const [username, setUsername] = useState('');
+
+    // ✅ 1. เช็คสถานะตอนโหลดหน้าเว็บ
+    useEffect(() => {
+        const token = localStorage.getItem('token');
+        const storedUser = localStorage.getItem('username');
+        
+        if (token) {
+            setIsLoggedIn(true);
+            setUsername(storedUser || 'Racer');
+        } else {
+            setIsLoggedIn(false);
+        }
+    }, []);
+
+    // ✅ 2. ฟังก์ชันออกจากระบบ
+    const handleLogout = () => {
+        // ลบขยะทิ้งให้หมด
+        localStorage.removeItem('token');
+        localStorage.removeItem('username');
+        localStorage.removeItem('isAdmin');
+        
+        // อัปเดต State และดีดกลับ
+        setIsLoggedIn(false);
+        setUsername('');
+        alert("ออกจากระบบเรียบร้อย 👋");
+        navigate('/login');
+    };
 
     return (
         <div style={styles.container}>
@@ -10,9 +39,18 @@ function Home() {
             <nav style={styles.navbar}>
                 <div style={styles.logo}>🏇 UMA CARD BATTLE</div>
                 <div style={styles.navLinks}>
-                    <span style={styles.link}>Wiki</span>
+                    <span style={styles.link} onClick={() => navigate('/wiki')}>Wiki</span>
                     <span style={styles.link}>Leaderboard</span>
-                    <span style={styles.link} onClick={() => navigate('/login')}>Login</span>
+                    
+                    {/* ✅ 3. เงื่อนไขเปลี่ยนปุ่ม Login / Logout */}
+                    {isLoggedIn ? (
+                        <div style={{display:'flex', gap:'20px', alignItems:'center'}}>
+                            <span style={{color:'#e91e63', fontWeight:'bold'}}>👤 {username}</span>
+                            <span style={styles.logoutBtn} onClick={handleLogout}>Logout</span>
+                        </div>
+                    ) : (
+                        <span style={styles.link} onClick={() => navigate('/login')}>Login</span>
+                    )}
                 </div>
             </nav>
 
@@ -28,14 +66,14 @@ function Home() {
                         เกม Simulation Card Battle ฝีมือคนไทย!
                     </p>
                     <div style={styles.heroButtons}>
-                        <button onClick={() => navigate('/battle')} style={styles.primaryBtn}>
+                        {/* ถ้ายังไม่ Login กด Start ให้เด้งไป Login ก่อน */}
+                        <button onClick={() => navigate(isLoggedIn ? '/battle' : '/login')} style={styles.primaryBtn}>
                             START GAME 🚀
                         </button>
-                        <button onClick={() => navigate('/inventory')} style={styles.secondaryBtn}>
+                        <button onClick={() => navigate(isLoggedIn ? '/inventory' : '/login')} style={styles.secondaryBtn}>
                             MY DECK 🎒
                         </button>
-                        {/* ✅ ปุ่ม Gacha กลับมาแล้ว! */}
-                        <button onClick={() => navigate('/gacha')} style={styles.gachaBtn}>
+                        <button onClick={() => navigate(isLoggedIn ? '/gacha' : '/login')} style={styles.gachaBtn}>
                             SUMMON 🎰
                         </button>
                     </div>
@@ -77,8 +115,11 @@ const styles = {
     container: { fontFamily: "'Inter', sans-serif", background: '#111', color: 'white', minHeight: '100vh', overflowX: 'hidden' },
     navbar: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 50px', background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(10px)', position: 'fixed', width: '100%', top: 0, zIndex: 100, boxSizing: 'border-box' },
     logo: { fontSize: '1.5rem', fontWeight: 'bold', background: 'linear-gradient(45deg, #e91e63, #ff9800)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' },
-    navLinks: { display: 'flex', gap: '30px' },
+    navLinks: { display: 'flex', gap: '30px', alignItems:'center' },
     link: { cursor: 'pointer', fontSize: '1rem', color: '#ccc', transition: 'color 0.3s', ':hover': { color: 'white' } },
+    // ✅ สไตล์ปุ่ม Logout
+    logoutBtn: { cursor: 'pointer', fontSize: '0.9rem', color: '#fff', border:'1px solid #e91e63', padding:'5px 15px', borderRadius:'20px', transition: '0.3s', ':hover': { background: '#e91e63' } },
+    
     hero: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '150px 50px 100px 50px', background: 'radial-gradient(circle at top right, #2a1a1a, #111)', minHeight: '80vh' },
     heroContent: { flex: 1, maxWidth: '600px', zIndex: 2 },
     heroTitle: { fontSize: '3.5rem', lineHeight: '1.2', marginBottom: '20px', fontWeight: '800' },
