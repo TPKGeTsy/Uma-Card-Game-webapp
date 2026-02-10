@@ -55,20 +55,59 @@ const newActionCards = [
         // 🐴 อัปเดต: เพิ่ม Power, Guts, Wisdom ให้ครบ 5 ค่า
         const horses = [
             { 
-                name: "Special Week", rarity: "SR", type: "HORSE", 
-                stats: { speed: 650, stamina: 700, power: 650, guts: 800, wisdom: 600 }, // พระเอกสายใจสู้
-                image: "/images/uma/special_week.png" 
-            },
+            name: "Special Week", rarity: "SR", type: "HORSE", 
+            stats: { speed: 700, stamina: 700, power: 650, guts: 800, wisdom: 600 },
+            image: "/images/uma/special_week.png",
+            description: "สาวน้อยบ้านนอกผู้สัญญาแม่ไว้ว่าจะเป็นที่ 1 ของญี่ปุ่น",
+
+            wikiProfile: {
+                themeColor: "#9c27b0", // สีม่วง
+                subColor: "#f3e5f5",   // สีม่วงอ่อน
+                birthDate: "2 พฤษภาคม 1995",
+                origin: "Hidaka, Hokkaido",
+                alias: "Japan's Best Uma Musume (wannabe)",
+                voiceActor: "Azumi Waki",
+                introQuote: "แม่จ๋า! สเปจังจะพยายามเต็มที่ จะเป็นม้าสาวอันดับ 1 ของญี่ปุ่นให้ได้เลย!",
+                fullStory: "เด็กสาวบ้านนอกที่สูญเสียแม่แท้ๆ ไปตั้งแต่เกิด ถูกเลี้ยงดูมาโดยแม่บุญธรรมพร้อมคำสัญญาว่าจะต้องเป็นม้าสาวที่เก่งที่สุด เธอมีนิสัยร่าเริง กินเก่ง และมุ่งมั่น แต่บางทีก็ซุ่มซ่าม เป็นคู่ปรับและเพื่อนสนิทของ Silence Suzuka",
+                goals: [
+                    "ชนะรายการ Japan Derby",
+                    "ทำให้แม่ภูมิใจ",
+                    "กินแครอทให้พุงกาง"
+                ],
+                raceHistory: [
+                    { name: "Tokyo Yushun (Japan Derby)", grade: "G1", result: "1st (ชนะเลิศ)" },
+                    { name: "Tenno Sho (Spring)", grade: "G1", result: "1st (ชนะเลิศ)" },
+                    { name: "Japan Cup", grade: "G1", result: "1st (ชนะเลิศ)" }
+                ]
+            }
+        },
             { 
-                name: "Silence Suzuka", rarity: "SSR", type: "HORSE", 
-                stats: { speed: 900, stamina: 500, power: 600, guts: 550, wisdom: 700 }, // เจ้าแม่สปีดต้นเกม
-                image: "/images/uma/silence_suzuka.png" 
-            },
-            { 
-                name: "Tokai Teio", rarity: "SSR", type: "HORSE", 
-                stats: { speed: 780, stamina: 600, power: 750, guts: 700, wisdom: 800 }, // อัจฉริยะ (Wisdom สูง)
-                image: "/images/uma/tokai_teio.png" 
-            },
+            name: "Silence Suzuka", rarity: "SSR", type: "HORSE", 
+            stats: { speed: 900, stamina: 500, power: 600, guts: 550, wisdom: 700 },
+            image: "/images/uma/silence_suzuka.png",
+            description: "ม้าสาวอัจฉริยะผู้รักการวิ่งนำหน้าสุด",
+
+            wikiProfile: {
+                themeColor: "#00c853", // สีเขียว
+                subColor: "#e8f5e9",   // สีเขียวอ่อน
+                birthDate: "1 พฤษภาคม 1994",
+                origin: "Mitsuishi, Hokkaido",
+                alias: "The Speed of Silence (ความเร็วแห่งความเงียบ)",
+                voiceActor: "Marika Kono",
+                introQuote: "ทิวทัศน์ที่ไม่มีใครอยู่ข้างหน้า... ฉันอยากเห็นมันตลอดไป",
+                fullStory: "ม้าสาวอัจฉริยะที่หลงใหลในการวิ่งหนีนำ (Runner) เธอไม่ชอบความวุ่นวายและมักเก็บตัว แต่เมื่อลงสนามเธอจะเปลี่ยนไปเป็นคนละคน สไตล์การวิ่งของเธอคือการทิ้งห่างคู่แข่งจนมองไม่เห็นฝุ่น",
+                goals: [
+                    "วิ่งให้เร็วกว่าใคร",
+                    "ค้นหาความหมายของการวิ่ง",
+                    "ดูแลรุ่นน้อง (Special Week)"
+                ],
+                raceHistory: [
+                    { name: "Takarazuka Kinen", grade: "G1", result: "1st (ชนะเลิศ)" },
+                    { name: "Mainichi Okan", grade: "G2", result: "1st (ชนะเลิศ)" },
+                    { name: "Tenno Sho (Autumn)", grade: "G1", result: "DNF (บาดเจ็บ)" }
+                ]
+            }
+        },
             { 
                 name: "Oguri Cap", rarity: "SR", type: "HORSE", 
                 stats: { speed: 700, stamina: 800, power: 850, guts: 750, wisdom: 600 }, // สายพลังและอึด
@@ -110,10 +149,34 @@ const newActionCards = [
                 image: "/images/uma/gentildonna.png",
             },
             { 
-                name: "T.M. Opera O", rarity: "SSR", type: "HORSE", 
-                stats: { speed: 750, stamina: 900, power: 750, guts: 850, wisdom: 800 }, // ราชาโอเปร่า Stat สมดุลและสูงทุกค่า
-                image: "/images/uma/tm_opera_o.png",
+            name: "T.M. Opera O", rarity: "SSR", type: "HORSE", 
+            stats: { speed: 750, stamina: 900, power: 750, guts: 850, wisdom: 800 },
+            image: "/images/uma/tm_opera_o.png",
+            description: "ราชาผู้ครองความยิ่งใหญ่ในปี 2000 ไร้พ่ายตลอดทั้งปี",
+            
+            // 🔥 WIKI DATA
+            wikiProfile: {
+                themeColor: "#ff9800", // สีส้ม
+                subColor: "#1a237e",   // สีน้ำเงินเข้ม
+                birthDate: "13 มีนาคม 1996",
+                origin: "Mitsuishi Kawami Farm",
+                alias: "The Invincible Overlord (ราชาผู้ไร้พ่าย)",
+                voiceActor: "Tokui Sora",
+                introQuote: "สวัสดี! ข้าคือราชา... T.M. OPERA O ผู้จะมาสร้างตำนานให้โลกจดจำ!",
+                fullStory: "ม้าสาวผู้มีความมั่นใจในตัวเองสูงลิ่ว มักจะพูดจาเหมือนเล่นละครเวทีตลอดเวลา เธอสร้างตำนานในปี 2000 ด้วยการกวาดรางวัล G1 ถึง 8 รายการรวดโดยไม่แพ้ใครเลย จนได้รับฉายาว่า 'ปาฏิหาริย์แห่งศตวรรษ'",
+                goals: [
+                    "ครองแชมป์ G1 ให้มากที่สุดในประวัติศาสตร์",
+                    "เป็นตำนานที่คนญี่ปุ่นจดจำไปตลอดกาล",
+                    "ทำลายสถิติเงินรางวัลสูงสุด"
+                ],
+                raceHistory: [
+                    { name: "Satsuki Sho", grade: "G1", result: "1st (ชนะเลิศ)" },
+                    { name: "Tenno Sho (Spring)", grade: "G1", result: "1st (ชนะเลิศ)" },
+                    { name: "Takarazuka Kinen", grade: "G1", result: "1st (ชนะเลิศ)" },
+                    { name: "Arima Kinen", grade: "G1", result: "1st (ชนะเลิศ)" }
+                ]
             }
+        }
         ];
 
 

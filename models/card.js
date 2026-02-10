@@ -1,54 +1,50 @@
 const mongoose = require('mongoose');
 
 const cardSchema = new mongoose.Schema({
-  name: { type: String, required: true },
-  
-  // ประเภทการ์ด: รองรับ HORSE, TRAINING, ACTION และเผื่ออนาคต SUPPORT
-  type: { 
-    type: String, 
-    enum: ['HORSE', 'TRAINING', 'ACTION', 'SUPPORT'], 
-    required: true 
-  },
+    name: { type: String, required: true },
+    type: { type: String, enum: ['HORSE', 'TRAINING', 'ACTION', 'TRACK'], required: true },
+    rarity: { type: String, default: 'N' },
+    image: String,
+    
+    // Stats สำหรับเกม
+    stats: {
+        speed: Number,
+        stamina: Number,
+        power: Number,
+        guts: Number,
+        wisdom: Number
+    },
 
-  // ความหายาก: มี N, R, SR, SSR
-  rarity: { 
-    type: String, 
-    enum: ['N', 'R', 'SR', 'SSR'], 
-    default: 'N' 
-  },
+    // Action/Training specific
+    statType: String,
+    value: Number,
+    condition: String,
+    effectType: String,
+    description: String,
 
-  image: { type: String }, // Path รูปภาพ
+    // Track specific
+    distance: Number,
+    weatherOptions: [String],
+    segments: Array,
+    landmarks: Array,
 
-  // 🐎 ค่าพลังม้า (สำคัญมากสำหรับหน้า Battle)
-  stats: {
-    speed: { type: Number, default: 0 },
-    stamina: { type: Number, default: 0 },
-    power: { type: Number, default: 0 },
-    guts: { type: Number, default: 0 },
-    wisdom: { type: Number, default: 0 }
-  },
-
-  // 🛠️ สำหรับ Action & Training Cards
-  value: { type: Number },          // ค่าตัวเลข (เช่น +50 speed)
-  statType: { type: String },       // ประเภท stat ที่ฝึก (SPEED, STAMINA)
-  effectType: { type: String },     // ผลลัพธ์สกิล (HEAL, SPEED_BURST)
-  condition: { type: String },      // เงื่อนไข (START_ONLY, CORNER)
-  desc: { type: String },           // คำอธิบายการ์ด (เอาไว้โชว์ Tooltip)
-
-  // 🎲 รองรับระบบลูกเต๋า (Gambler)
-  gamble: {
-    minRoll: Number,
-    winStats: Object,
-    loseStats: Object
-  },
-
-  // 🎁 รองรับ Training ที่แถมการ์ด Action (Bonus)
-  bonusAction: {
-    name: String,
-    type: String,
-    effect: String,
-    color: String
-  }
+    // 🔥 ส่วนที่เพิ่มใหม่: WIKI PROFILE (เก็บข้อมูลประวัติแบบละเอียด)
+    wikiProfile: {
+        themeColor: String, // สีประจำตัว (เช่น #e91e63)
+        subColor: String,   // สีรอง (เช่น #1a237e)
+        birthDate: String,  // วันเกิด
+        origin: String,     // บ้านเกิด
+        alias: String,      // ฉายา
+        voiceActor: String, // นักพากย์
+        introQuote: String, // คำพูดเปิดตัว
+        fullStory: String,  // ประวัติยาวๆ
+        goals: [String],    // เป้าหมาย (Array)
+        raceHistory: [{     // ประวัติการแข่ง
+            name: String,
+            result: String,
+            grade: String
+        }]
+    }
 });
 
 module.exports = mongoose.model('Card', cardSchema);

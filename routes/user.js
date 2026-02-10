@@ -2,6 +2,8 @@ const express = require('express');
 const router = express.Router();
 const User = require('../models/User'); // 👈 เช็ค path ให้ถูก
 const authenticateUser = require('../middleware/auth'); // 👈 เช็ค path ให้ถูก
+const Card = require('../models/card');
+
 
 // 1. 🎒 ดึง Inventory (เอาข้อมูลการ์ดมาโชว์ด้วย)
 router.get('/inventory', authenticateUser, async (req, res) => {
@@ -31,6 +33,45 @@ router.post('/set-team', authenticateUser, async (req, res) => {
         await user.save();
 
         res.json({ message: "จัดทีมม้าเรียบร้อย!", decks: user.decks });
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+});
+
+router.get('/wiki-cards', async (req, res) => {
+    try {
+        // ดึงเฉพาะ Type = HORSE และเรียงตามชื่อ
+        // select เอาแค่ field ที่จำเป็นเพื่อลดภาระ (id, name, image, rarity)
+        const horses = await Card.find({ type: 'HORSE' })
+            .select('name image rarity wikiProfile.themeColor') 
+            .sort({ name: 1 });
+            
+        res.json(horses);
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+});
+router.get('/wiki-cards/:id', async (req, res) => {
+    try {
+        const horse = await Card.findById(req.params.id);
+        if (!horse) return res.status(404).json({ message: "ไม่พบม้าตัวนี้" });
+        res.json(horse);
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+});
+router.get('/arena/opponents', async (req, res) => {
+    try {
+        // หา User ที่มีการจัดทีม (decks ไม่ว่าง) และไม่ใช่ตัวเรา (สมมติส่ง userId มาทาง header หรือ query ก็ได้)
+        // เพื่อความง่าย ดึงมาหมดก่อนแล้วสุ่ม 5 คน
+        const opponents = await User.find({ 
+            decks: { $exists: true, $not: { $size: 0 } } 
+        })
+        .select('username decks') // เอาแค่ชื่อกับทีม
+        .populate('decks')        // join ข้อมูลการ์ดม้ามาด้วย
+        .limit(10);               // ดึงมาสัก 10 คน
+
+        res.json(opponents);
     } catch (err) {
         res.status(500).json({ message: err.message });
     }
