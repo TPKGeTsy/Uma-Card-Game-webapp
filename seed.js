@@ -191,8 +191,7 @@ const newActionCards = [
                 value: 80, 
                 effectType: "SPEED_BURST", 
                 condition: "START_ONLY", // ใช้ได้แค่ 5 วินาทีแรก
-                desc: "ออกตัวพุ่งนำทันทีเมื่อเริ่มเกม",
-                image: "/images/ActionCard/rocket_start.png" 
+                desc: "ออกตัวพุ่งนำทันทีเมื่อเริ่มเกม"
             },
             { 
                 name: "Positioning", 
@@ -201,8 +200,7 @@ const newActionCards = [
                 value: 30, 
                 effectType: "PASSIVE", 
                 condition: "BLOCKED", // ใช้ได้เมื่อโดนบัง
-                desc: "ขยับหาเลนว่างโดยอัตโนมัติ",
-                image: "/images/ActionCard/positioning.png" 
+                desc: "ขยับหาเลนว่างโดยอัตโนมัติ"
             },
             { 
                 name: "Pace Keeper", 
@@ -211,8 +209,7 @@ const newActionCards = [
                 value: 20, 
                 effectType: "STAMINA_SAVE", 
                 condition: "MID_GAME", 
-                desc: "รักษาระดับการใช้พลังงาน (ลด Stamina Drain)",
-                image: "/images/ActionCard/pace_keeper.png" 
+                desc: "รักษาระดับการใช้พลังงาน (ลด Stamina Drain)"
             },
 
             // ==========================================
@@ -225,8 +222,7 @@ const newActionCards = [
                 value: 50, 
                 effectType: "SPEED", 
                 condition: "CORNER", // ใช้ได้เฉพาะในโค้ง
-                desc: "เร่งความเร็วในทางโค้งโดยไม่หลุดเลน",
-                image: "/images/ActionCard/corner_master.png" 
+                desc: "เร่งความเร็วในทางโค้งโดยไม่หลุดเลน"
             },
             { 
                 name: "Inner Drift", 
@@ -235,8 +231,7 @@ const newActionCards = [
                 value: 40, 
                 effectType: "SPEED", 
                 condition: "CORNER",
-                desc: "เสียบวงในเพื่อแซงทางโค้ง",
-                image: "/images/ActionCard/drift.png" 
+                desc: "เสียบวงในเพื่อแซงทางโค้ง"
             },
 
             // ==========================================
@@ -249,8 +244,7 @@ const newActionCards = [
                 value: 60, 
                 effectType: "SPEED", 
                 condition: "STRAIGHT", // ใช้ได้เฉพาะทางตรง
-                desc: "ระเบิดความเร็วสายลมในทางตรง",
-                image: "/images/ActionCard/hayate.png" 
+                desc: "ระเบิดความเร็วสายลมในทางตรง"
             },
             { 
                 name: "Mountain King", 
@@ -259,8 +253,7 @@ const newActionCards = [
                 value: 50, 
                 effectType: "POWER", 
                 condition: "UPHILL", // ใช้ได้เฉพาะตอนขึ้นเนิน
-                desc: "วิ่งขึ้นเนินโดยความเร็วไม่ตก",
-                image: "/images/ActionCard/mountain.png" 
+                desc: "วิ่งขึ้นเนินโดยความเร็วไม่ตก"
             },
             { 
                 name: "Slipstream", 
@@ -269,8 +262,7 @@ const newActionCards = [
                 value: 30, 
                 effectType: "SPEED", 
                 condition: "BEHIND_10M", // ใช้ได้เมื่อตามหลังคนอื่น < 10m
-                desc: "อาศัยลมดูดจากคนหน้าเพื่อเร่งแซง",
-                image: "/images/ActionCard/slipstream.png" 
+                desc: "อาศัยลมดูดจากคนหน้าเพื่อเร่งแซง"
             },
 
             // ==========================================
@@ -283,8 +275,7 @@ const newActionCards = [
                 value: 100, 
                 effectType: "DEBUFF_STAMINA", 
                 condition: "SIDE_BY_SIDE", // ใช้ได้เมื่อตีคู่
-                desc: "ทำลายสมาธิคู่แข่ง ลด Stamina เป้าหมาย",
-                image: "/images/ActionCard/glare.png" 
+                desc: "ทำลายสมาธิคู่แข่ง ลด Stamina เป้าหมาย"
             },
             { 
                 name: "Block", 
@@ -293,8 +284,7 @@ const newActionCards = [
                 value: 50, 
                 effectType: "DEBUFF_SPEED", 
                 condition: "LEADING", // ใช้ได้เมื่อเราอยู่หน้า
-                desc: "ขวางทางวิ่ง ลดความเร็วคนข้างหลัง",
-                image: "/images/ActionCard/block.png" 
+                desc: "ขวางทางวิ่ง ลดความเร็วคนข้างหลัง"
             },
             { 
                 name: "Dust Cloud", 
@@ -303,8 +293,7 @@ const newActionCards = [
                 value: 30, 
                 effectType: "DEBUFF_SPEED", 
                 condition: "ANY",
-                desc: "เตะฝุ่นใส่คนข้างหลังเล็กน้อย",
-                image: "/images/ActionCard/dust.png" 
+                desc: "เตะฝุ่นใส่คนข้างหลังเล็กน้อย"
             },
 
             // ==========================================
@@ -317,8 +306,7 @@ const newActionCards = [
                 value: 200, 
                 effectType: "HEAL", 
                 condition: "STAMINA_LOW", // ใช้ได้เมื่อ Stamina < 50%
-                desc: "สูดหายใจลึก ฟื้นฟู Stamina ปานกลาง",
-                image: "/images/ActionCard/breath.png" 
+                desc: "สูดหายใจลึก ฟื้นฟู Stamina ปานกลาง"
             },
             { 
                 name: "Maestro", 
@@ -327,8 +315,7 @@ const newActionCards = [
                 value: 400, 
                 effectType: "HEAL", 
                 condition: "CORNER", // ฮีลเทพ ใช้ได้เฉพาะทางโค้ง
-                desc: "ฟื้นฟู Stamina มหาศาลด้วยเทคนิคชั้นสูง",
-                image: "/images/ActionCard/maestro.png" 
+                desc: "ฟื้นฟู Stamina มหาศาลด้วยเทคนิคชั้นสูง"
             },
             { 
                 name: "Carrot Snack", 
@@ -337,8 +324,7 @@ const newActionCards = [
                 value: 100, 
                 effectType: "HEAL", 
                 condition: "ANY",
-                desc: "กินแครอทเติมพลังเล็กน้อย",
-                image: "/images/ActionCard/carrot.png" 
+                desc: "กินแครอทเติมพลังเล็กน้อย"
             },
 
             // ==========================================
@@ -351,8 +337,7 @@ const newActionCards = [
                 value: 100, 
                 effectType: "SPEED", 
                 condition: "LAST_SPURT", // 400m สุดท้าย
-                desc: "เร่งความเร็วเต็มสูบเข้าเส้นชัย",
-                image: "/images/ActionCard/full_throttle.png" 
+                desc: "เร่งความเร็วเต็มสูบเข้าเส้นชัย"
             },
             { 
                 name: "Never Give Up", 
@@ -361,8 +346,7 @@ const newActionCards = [
                 value: 50, 
                 effectType: "GUTS", 
                 condition: "LAST_SPURT",
-                desc: "รีดพลังเฮือกสุดท้ายแม้ Stamina หมด",
-                image: "/images/ActionCard/never_give_up.png" 
+                desc: "รีดพลังเฮือกสุดท้ายแม้ Stamina หมด"
             },
             
             // 👇 ใบเดิมที่คุณเคยใส่ไว้ (บัฟทีม)
@@ -373,8 +357,7 @@ const newActionCards = [
                 value: 30, 
                 effectType: "BUFF_ALL", 
                 condition: "ANY", 
-                desc: "ตะโกนเชียร์ บัฟความเร็วทั้งทีม", 
-                image: "/images/ActionCard/HeartofSpirit.png" 
+                desc: "ตะโกนเชียร์ บัฟความเร็วทั้งทีม"
             }
         ];
 

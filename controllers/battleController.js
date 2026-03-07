@@ -1,44 +1,52 @@
+// ⚔️ ส่วนจัดการการต่อสู้ (Battle System)
 const User = require('../models/User');
 
+/**
+ * 🐎 ฟังก์ชันเริ่มการต่อสู้ (Start Battle)
+ * 1. ตรวจสอบทีมของผู้เล่น (ต้องมีม้า 3 ตัว)
+ * 2. คำนวณพลังรวมของทีมเรา (Speed + Stamina)
+ * 3. สุ่มสร้างพลังคู่ต่อสู้ (AI) ที่มีความเก่งใกล้เคียงกับเรา
+ * 4. ตัดสินผลแพ้-ชนะ และมอบรางวัล (Coins)
+ */
 exports.startBattle = async (req, res) => {
     try {
-        // 1. ดึงข้อมูล User และ Team ที่จัดไว้
+        // ดึงข้อมูลผู้เล่นและม้าในทีมที่จัดไว้
         const user = await User.findById(req.user.userId).populate('decks');
 
-        // เช็คว่าจัดทีมหรือยัง?
+        // ตรวจสอบความพร้อมของทีม
         if (!user.decks || user.decks.length !== 3) {
             return res.status(400).json({ message: "คุณยังไม่ได้จัดทีม 3 ตัวเลย! ไปจัดก่อนที่หน้า Deck" });
         }
 
-        // 2. คำนวณพลังทีมเรา (รวม Speed + Stamina ของม้าทุกตัว)
+        // คำนวณพลังรวมฝั่งผู้เล่น
         let myPower = 0;
         user.decks.forEach(card => {
             myPower += (card.stats.speed + card.stats.stamina);
         });
 
-        // 3. สร้างพลังบอท (ให้พลังใกล้เคียงเรา บวกลบ 10 หน่วย)
-        // บอทจะเก่งตามเรา ยิ่งเราเก่ง บอทยิ่งเก่ง
-        const variance = Math.floor(Math.random() * 20) - 5; // สุ่มเลข -5 ถึง +15
+        // ระบบ Dynamic Difficulty: สร้างบอทให้เก่งตามเรา (สุ่มค่าพลังบวกลบเล็กน้อย)
+        const variance = Math.floor(Math.random() * 20) - 5; 
         const botPower = myPower + variance; 
 
-        // 4. ตัดสินผลแพ้ชนะ
+        // ตัดสินผลแพ้ชนะ
         let result = "";
         let reward = 0;
 
         if (myPower >= botPower) {
             result = "WIN";
-            reward = 500; // ชนะได้ 500
+            reward = 500; // รางวัลสำหรับผู้ชนะ
             user.coins += reward;
+            user.wins = (user.wins || 0) + 1; // เพิ่มสถิติชัยชนะ
         } else {
             result = "LOSE";
-            reward = 50; // แพ้ได้ค่ารถกลับบ้าน 50
+            reward = 50; // รางวัลปลอบใจสำหรับผู้แพ้
             user.coins += reward;
         }
 
-        // 5. บันทึกเหรียญล่าสุด
+        // บันทึกผลลัพธ์ลง Database
         await user.save();
 
-        // 6. ส่งผลการแข่งกลับไป
+        // ส่งผลการแข่งกลับไปแสดงผลที่หน้าบ้าน (Frontend)
         res.json({
             result: result,
             myTeamPower: myPower,

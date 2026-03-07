@@ -14,10 +14,19 @@ function Admin() {
   const [formData, setFormData] = useState({
     name: '', rarity: 'R', 
     speed: 600, stamina: 600, power: 600, guts: 600, wisdom: 600, // ✅ 5 Stats
-    statType: 'SPEED', value: 10, 
+    statType: 'SPEED'  ,    value: 10, 
     condition: 'ANY', effectType: 'SPEED_BOOST', description: '',
-    distance: 2000, weather: 'Sunny'
+    distance: 2000, weather: 'Sunny',
+    
+    // 🔥 New Wiki Profile Fields
+    themeColor: '#e91e63', subColor: '#1a237e',
+    birthDate: '', origin: '', alias: '', voiceActor: '',
+    introQuote: '', fullStory: ''
   });
+
+  // 🐎 Horse Wiki Lists
+  const [horseGoals, setHorseGoals] = useState(['']);
+  const [horseHistory, setHorseHistory] = useState([{ name: '', result: '1st', grade: 'G1' }]);
 
   // 🏟️ Track Logic
   const [segmentCount, setSegmentCount] = useState(1); 
@@ -76,7 +85,15 @@ function Admin() {
     const data = new FormData();
     data.append('type', addType);
     data.append('name', formData.name);
-    if (file) data.append('imageFile', file); else { alert("⚠️ ใส่รูปด้วยครับ!"); return; }
+    if (file) {
+        data.append('imageFile', file);
+    } else if (addType === 'HORSE') {
+        alert("⚠️ ม้าต้องมีรูปนะครับ! (เพื่อความสวยงามใน Wiki)");
+        return;
+    } else {
+        // ถ้าไม่มีรูป และไม่ใช่ HORSE ให้ใส่ค่าว่างไป (Backend จะจัดการเองหรือปล่อยว่าง)
+        data.append('image', ''); 
+    }
 
     if (addType === 'HORSE') {
         data.append('rarity', formData.rarity);
@@ -84,6 +101,19 @@ function Admin() {
         data.append('stats', JSON.stringify({ 
             speed: formData.speed, stamina: formData.stamina, 
             power: formData.power, guts: formData.guts, wisdom: formData.wisdom 
+        }));
+        // 🔥 ส่ง Wiki Profile
+        data.append('wikiProfile', JSON.stringify({
+            themeColor: formData.themeColor,
+            subColor: formData.subColor,
+            birthDate: formData.birthDate,
+            origin: formData.origin,
+            alias: formData.alias,
+            voiceActor: formData.voiceActor,
+            introQuote: formData.introQuote,
+            fullStory: formData.fullStory,
+            goals: horseGoals.filter(g => g.trim() !== ''),
+            raceHistory: horseHistory.filter(h => h.name.trim() !== '')
         }));
     } else if (addType === 'TRAINING') {
         data.append('statType', formData.statType);
@@ -129,6 +159,10 @@ function Admin() {
     setEditFile(null);
     if (item.segments) setEditSegments(item.segments);
     if (item.landmarks) setEditLandmarks(item.landmarks); // ✅ Load Landmarks
+
+    // Load Wiki Lists
+    if (item.wikiProfile?.goals) setHorseGoals(item.wikiProfile.goals); else setHorseGoals(['']);
+    if (item.wikiProfile?.raceHistory) setHorseHistory(item.wikiProfile.raceHistory); else setHorseHistory([{ name: '', result: '1st', grade: 'G1' }]);
   };
 
   const handleUpdateSubmit = async (type) => {
@@ -140,6 +174,12 @@ function Admin() {
     if (type === 'HORSE') {
         data.append('rarity', editData.rarity);
         data.append('stats', JSON.stringify(editData.stats));
+        // 🔥 Update Wiki Profile
+        data.append('wikiProfile', JSON.stringify({
+            ...editData.wikiProfile,
+            goals: horseGoals.filter(g => g.trim() !== ''),
+            raceHistory: horseHistory.filter(h => h.name.trim() !== '')
+        }));
     } else if (type === 'TRAINING') {
         data.append('statType', editData.statType);
         data.append('value', editData.value);
@@ -164,14 +204,34 @@ function Admin() {
     } catch (err) { alert("Error: " + err.message); }
   };
 
-  // --- RENDER LIST ---
+  // --- RENDER HELPERS ---
+  const renderImage = (item) => {
+    if (item.image && item.image.trim() !== '') {
+        return <img src={item.image} style={{width:'70px', height:'70px', borderRadius:'10px', objectFit:'cover', border: '2px solid #444'}} />;
+    }
+    // ถ้าไม่มีรูป ให้โชว์เป็นกล่องข้อความเท่ๆ
+    const colors = { HORSE: '#e91e63', ACTION: '#00e676', TRAINING: '#2196f3', TRACK: '#ff9800' };
+    const color = colors[item.type] || '#777';
+    return (
+        <div style={{
+            width:'70px', height:'70px', borderRadius:'10px', 
+            background: color, display:'flex', justifyContent:'center', 
+            alignItems:'center', fontSize:'0.7rem', fontWeight:'bold', 
+            textAlign:'center', padding:'5px', color:'white', boxSizing:'border-box',
+            border: '2px solid rgba(255,255,255,0.2)'
+        }}>
+            {item.name.substring(0, 10)}
+        </div>
+    );
+  };
+
   const renderCardList = (list, type) => (
     <div style={styles.grid}>
         {list.map(item => (
             <div key={item._id} style={styles.card}>
                 {/* Image Section */}
                 <div style={{display:'flex', flexDirection:'column', alignItems:'center', marginRight:'15px'}}>
-                    <img src={item.image} style={{width:'70px', height:'70px', borderRadius:'10px', objectFit:'cover', border: '2px solid #444'}} />
+                    {renderImage(item)}
                     {editMode === item._id && <input type="file" onChange={e => setEditFile(e.target.files[0])} style={{width:'80px', fontSize:'0.7rem', marginTop:'5px'}} />}
                 </div>
                 
@@ -271,7 +331,7 @@ function Admin() {
                                 <input id="fileInput" type="file" onChange={e => setFile(e.target.files[0])} style={styles.input} accept="image/*" />
                             </div>
                             
-                            {/* 🐎 HORSE INPUTS (5 STATS) */}
+                            {/* 🐎 HORSE INPUTS (5 STATS + WIKI) */}
                             {addType === 'HORSE' && (<>
                                 <div style={styles.field}><label style={{color:'#aaa'}}>Rarity:</label><select value={formData.rarity} onChange={e => setFormData({...formData, rarity: e.target.value})} style={styles.input}><option value="N">N</option><option value="R">R</option><option value="SR">SR</option><option value="SSR">SSR</option></select></div>
                                 <div style={{display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:'10px', marginBottom:'20px'}}>
@@ -280,6 +340,66 @@ function Admin() {
                                     <div><label style={{color:'#f44336'}}>Power</label><input type="number" value={formData.power} onChange={e => setFormData({...formData, power: e.target.value})} style={styles.input} /></div>
                                     <div><label style={{color:'#e91e63'}}>Guts</label><input type="number" value={formData.guts} onChange={e => setFormData({...formData, guts: e.target.value})} style={styles.input} /></div>
                                     <div><label style={{color:'#00e676'}}>Wisdom</label><input type="number" value={formData.wisdom} onChange={e => setFormData({...formData, wisdom: e.target.value})} style={styles.input} /></div>
+                                </div>
+
+                                <div style={{...styles.groupBox, borderColor: '#e91e63'}}>
+                                    <h3 style={{color:'#e91e63', marginTop:0}}>📖 Wiki Profile</h3>
+                                    
+                                    <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:'10px', marginBottom:'10px'}}>
+                                        <div><label>Main Color</label><input type="color" value={formData.themeColor} onChange={e => setFormData({...formData, themeColor: e.target.value})} style={{...styles.input, height:'50px', padding:'5px'}} /></div>
+                                        <div><label>Sub Color</label><input type="color" value={formData.subColor} onChange={e => setFormData({...formData, subColor: e.target.value})} style={{...styles.input, height:'50px', padding:'5px'}} /></div>
+                                    </div>
+
+                                    <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:'10px'}}>
+                                        <div><label>Alias (ฉายา)</label><input value={formData.alias} onChange={e => setFormData({...formData, alias: e.target.value})} style={styles.input} placeholder="เช่น ความเร็วแห่งความเงียบ" /></div>
+                                        <div><label>Voice Actor</label><input value={formData.voiceActor} onChange={e => setFormData({...formData, voiceActor: e.target.value})} style={styles.input} /></div>
+                                        <div><label>Birth Date</label><input value={formData.birthDate} onChange={e => setFormData({...formData, birthDate: e.target.value})} style={styles.input} placeholder="เช่น 1 พฤษภาคม" /></div>
+                                        <div><label>Origin</label><input value={formData.origin} onChange={e => setFormData({...formData, origin: e.target.value})} style={styles.input} /></div>
+                                    </div>
+
+                                    <div style={{marginTop:'10px'}}>
+                                        <label>Intro Quote</label>
+                                        <input value={formData.introQuote} onChange={e => setFormData({...formData, introQuote: e.target.value})} style={styles.input} />
+                                    </div>
+
+                                    <div style={{marginTop:'10px'}}>
+                                        <label>Full Story</label>
+                                        <textarea value={formData.fullStory} onChange={e => setFormData({...formData, fullStory: e.target.value})} style={{...styles.input, height:'100px'}} />
+                                    </div>
+
+                                    {/* Goals */}
+                                    <div style={{marginTop:'15px'}}>
+                                        <label style={{fontWeight:'bold'}}>🎯 Goals</label>
+                                        {horseGoals.map((g, idx) => (
+                                            <div key={idx} style={{display:'flex', gap:'5px', marginBottom:'5px'}}>
+                                                <input value={g} onChange={e => {
+                                                    const newGoals = [...horseGoals]; newGoals[idx] = e.target.value; setHorseGoals(newGoals);
+                                                }} style={styles.miniInputTable} />
+                                                <button type="button" onClick={() => setHorseGoals(horseGoals.filter((_, i) => i !== idx))} style={{background:'red', color:'white', border:'none', borderRadius:'3px'}}>x</button>
+                                            </div>
+                                        ))}
+                                        <button type="button" onClick={() => setHorseGoals([...horseGoals, ''])} style={{width:'100%', padding:'5px', background:'#555', color:'white', border:'none', borderRadius:'5px', marginTop:'5px'}}>+ Add Goal</button>
+                                    </div>
+
+                                    {/* Race History */}
+                                    <div style={{marginTop:'15px'}}>
+                                        <label style={{fontWeight:'bold'}}>🏆 Race History</label>
+                                        {horseHistory.map((h, idx) => (
+                                            <div key={idx} style={{display:'flex', gap:'5px', marginBottom:'5px'}}>
+                                                <input placeholder="Race Name" value={h.name} onChange={e => {
+                                                    const newHist = [...horseHistory]; newHist[idx].name = e.target.value; setHorseHistory(newHist);
+                                                }} style={styles.miniInputTable} />
+                                                <select value={h.grade} onChange={e => {
+                                                    const newHist = [...horseHistory]; newHist[idx].grade = e.target.value; setHorseHistory(newHist);
+                                                }} style={styles.miniSelect}><option>G1</option><option>G2</option><option>G3</option><option>Pre-OP</option></select>
+                                                <input placeholder="Result" value={h.result} onChange={e => {
+                                                    const newHist = [...horseHistory]; newHist[idx].result = e.target.value; setHorseHistory(newHist);
+                                                }} style={{...styles.miniInputTable, width:'80px'}} />
+                                                <button type="button" onClick={() => setHorseHistory(horseHistory.filter((_, i) => i !== idx))} style={{background:'red', color:'white', border:'none', borderRadius:'3px'}}>x</button>
+                                            </div>
+                                        ))}
+                                        <button type="button" onClick={() => setHorseHistory([...horseHistory, { name: '', result: '1st', grade: 'G1' }])} style={{width:'100%', padding:'5px', background:'#555', color:'white', border:'none', borderRadius:'5px', marginTop:'5px'}}>+ Add History</button>
+                                    </div>
                                 </div>
                             </>)}
 

@@ -8,6 +8,7 @@ const TrainingCard = require('../models/TrainingCard');
 const ActionCard = require('../models/ActionCard');
 const Track = require('../models/Track');
 const checkAdmin = require('../middleware/checkAdmin');
+const authenticateUser = require('../middleware/auth'); 
 
 // --- 1. ตั้งค่าการอัปโหลดรูป (Multer Config) ---
 const storage = multer.diskStorage({
@@ -25,7 +26,7 @@ const storage = multer.diskStorage({
 const upload = multer({ storage: storage });
 
 // --- 2. API: CREATE (เพิ่มข้อมูลพร้อมรูป) ---
-router.post('/add-card', upload.single('imageFile'), checkAdmin, async (req, res) => {
+router.post('/add-card', authenticateUser, upload.single('imageFile'), checkAdmin, async (req, res) => {
     try {
         const { type, ...data } = req.body; // type = HORSE, TRAINING, ACTION, TRACK
         let newCard;
@@ -38,6 +39,7 @@ router.post('/add-card', upload.single('imageFile'), checkAdmin, async (req, res
 
         // แปลง string เป็น object สำหรับ stats (กรณี HORSE)
         if (cardData.stats) cardData.stats = JSON.parse(cardData.stats);
+        if (cardData.wikiProfile) cardData.wikiProfile = JSON.parse(cardData.wikiProfile); // 🔥 เพิ่มบรรทัดนี้
 
         // --- Logic การเลือก Model เพื่อบันทึก ---
         if (type === 'HORSE') {
@@ -93,7 +95,7 @@ router.get('/all-cards', async (req, res) => {
 });
 
 // --- 4. API: UPDATE (แก้ไขข้อมูล) ---
-router.put('/update-card/:id', upload.single('imageFile'), checkAdmin, async (req, res) => {
+router.put('/update-card/:id', authenticateUser, upload.single('imageFile'), checkAdmin, async (req, res) => {
     try {
         const { id } = req.params;
         const { collectionType, ...updateTextData } = req.body;
@@ -106,6 +108,9 @@ router.put('/update-card/:id', upload.single('imageFile'), checkAdmin, async (re
 
         if (collectionType === 'HORSE' && updateData.stats) {
              updateData.stats = JSON.parse(updateData.stats);
+        }
+        if (collectionType === 'HORSE' && updateData.wikiProfile) {
+             updateData.wikiProfile = JSON.parse(updateData.wikiProfile); // 🔥 เพิ่มการ Parse Wiki
         }
 
         let Model;
@@ -123,7 +128,7 @@ router.put('/update-card/:id', upload.single('imageFile'), checkAdmin, async (re
 });
 
 // --- 5. API: DELETE (ลบข้อมูล) ---
-router.delete('/delete-card/:id', checkAdmin, async (req, res) => {
+router.delete('/delete-card/:id', authenticateUser, checkAdmin, async (req, res) => {
     try {
         const { id } = req.params;
         const { collectionType } = req.query;

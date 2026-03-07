@@ -66,6 +66,38 @@ function Inventory() {
     } catch(e) { alert("Save Failed"); }
   };
 
+  // --- RENDER HELPERS ---
+  const renderCardImage = (card, size = '100px') => {
+    if (card.image && card.image.trim() !== '' && !card.image.includes('placehold.co')) {
+        return <img src={card.image} style={{width:'100%', height:size, objectFit:'cover', borderRadius:'5px'}} />;
+    }
+
+    // 🎨 Text-based Card Style
+    const rarityColors = { 
+        SSR: 'linear-gradient(135deg, #ffcc33, #ff6600)', 
+        SR: 'linear-gradient(135deg, #9933ff, #6600cc)', 
+        R: 'linear-gradient(135deg, #3399ff, #0033cc)', 
+        N: 'linear-gradient(135deg, #999, #333)' 
+    };
+    const bg = rarityColors[card.rarity] || '#444';
+
+    return (
+        <div style={{
+            width:'100%', height:size, borderRadius:'5px', 
+            background: bg, display:'flex', flexDirection:'column',
+            justifyContent:'center', alignItems:'center', padding:'5px',
+            boxSizing:'border-box', border:'2px solid rgba(255,255,255,0.3)',
+            boxShadow: 'inset 0 0 10px rgba(0,0,0,0.5)'
+        }}>
+            <div style={{fontSize:'0.6rem', fontWeight:'bold', color:'rgba(255,255,255,0.8)', textTransform:'uppercase'}}>{card.type}</div>
+            <div style={{fontSize:'0.8rem', fontWeight:'900', color:'white', textAlign:'center', marginTop:'2px', lineHeight:'1', textShadow:'1px 1px 2px black'}}>
+                {card.name}
+            </div>
+            <div style={{fontSize:'0.7rem', color:'gold', marginTop:'5px', fontWeight:'bold'}}>{card.rarity}</div>
+        </div>
+    );
+  };
+
   if (loading) return (
     <div style={styles.pageWrapper}>
         <div style={{color:'white', padding:'50px', textAlign:'center'}}>⏳ Loading Inventory...</div>
@@ -107,7 +139,7 @@ function Inventory() {
                     <div style={styles.grid}>
                         {inventory.filter(i => i.cardId.type === 'HORSE').map((h, i) => (
                             <div key={i} style={styles.cardItem}>
-                                <img src={h.cardId.image} style={styles.img} onError={(e)=>e.target.src='https://placehold.co/100?text=No+Img'}/>
+                                {renderCardImage(h.cardId, '140px')}
                                 <div style={{color:'white', marginTop:'10px', fontWeight:'bold'}}>{h.cardId.name}</div>
                                 <div style={{color:'#aaa', fontSize:'0.8rem'}}>{h.cardId.rarity}</div>
                             </div>
@@ -136,7 +168,7 @@ function Inventory() {
                             <div style={{...styles.grid, gridTemplateColumns:'repeat(auto-fill, minmax(100px, 1fr))', paddingRight:'5px'}}>
                                 {inventory.filter(i => i.cardId.type === 'ACTION').map((item, i) => (
                                     <div key={i} onClick={() => addToDeck(item)} style={styles.cardSelectable}>
-                                        <img src={item.cardId.image} style={{width:'100%', height:'100px', objectFit:'cover', borderRadius:'5px'}} onError={(e)=>e.target.src='https://placehold.co/100'}/>
+                                        {renderCardImage(item.cardId, '100px')}
                                         <div style={{fontSize:'0.8rem', color:'white', marginTop:'5px'}}>{item.cardId.name}</div>
                                     </div>
                                 ))}
@@ -153,7 +185,7 @@ function Inventory() {
                             <div style={{...styles.grid, gridTemplateColumns:'repeat(auto-fill, minmax(100px, 1fr))', paddingRight:'5px'}}>
                                 {myDeck.map((item, i) => (
                                     <div key={i} onClick={() => removeFromDeck(i)} style={styles.cardInDeck}>
-                                        <img src={item.cardId.image} style={{width:'100%', height:'100px', objectFit:'cover', borderRadius:'5px'}} onError={(e)=>e.target.src='https://placehold.co/100'}/>
+                                        {renderCardImage(item.cardId, '100px')}
                                         <div style={{fontSize:'0.8rem', color:'black', fontWeight:'bold', marginTop:'5px'}}>{item.cardId.name}</div>
                                         <div style={styles.removeIcon}>✕</div>
                                     </div>
@@ -172,7 +204,7 @@ function Inventory() {
 
 // 🎨 STYLES
 const styles = {
-    // ✅ เพิ่ม Wrapper คลุมหน้าจอ
+    // ✅ เพิ่ม Wrapper คลx`ุมหน้าจอ
     pageWrapper: {
         backgroundColor: '#111',
         minHeight: '100vh',

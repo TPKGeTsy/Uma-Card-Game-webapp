@@ -86,8 +86,8 @@ function Gacha() {
                 <div style={styles.bannerContainer}>
                     {/* Banner Image */}
                     <div style={styles.banner}>
-                        <div style={styles.bannerText}>STANDARD POOL</div>
-                        <div style={styles.bannerSub}>Horses • Actions • Training</div>
+                        {/* <div style={styles.bannerText}>STANDARD POOL</div> */}
+                        {/* <div style={styles.bannerSub}>Horses • Actions • Training</div> */}
                         <img src="https://placehold.co/600x300/1a1a1a/white?text=All+Stars+Banner" style={styles.bannerImg} />
                     </div>
 

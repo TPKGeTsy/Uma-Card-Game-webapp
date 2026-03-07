@@ -6,6 +6,7 @@ const userSchema = new mongoose.Schema({
   password: { type: String, required: true },
   coins: { type: Number, default: 1000 },
   isAdmin: { type: Boolean, default: false },
+  wins: { type: Number, default: 0 }, // ✅ เก็บสถิติชนะ
 
   // 🎒 Inventory รวม (เก็บทั้ง ม้า, Action, Training)
   inventory: [{

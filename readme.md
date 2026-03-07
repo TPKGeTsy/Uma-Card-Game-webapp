@@ -5,7 +5,7 @@ npm run dev
 ---------------------
 run frontend
 ----------------------
-cd cd C:\Users\gamer\gametest>client
+cd client
 npm run dev
 -----------------------
 

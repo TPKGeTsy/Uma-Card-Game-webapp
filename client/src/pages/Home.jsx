@@ -5,6 +5,20 @@ function Home() {
     const navigate = useNavigate();
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [username, setUsername] = useState('');
+    const [showLeaderboard, setShowLeaderboard] = useState(false);
+    const [leaderboardData, setLeaderboardData] = useState([]); // ✅ เก็บข้อมูลจริงจาก DB
+
+    // ✅ โหลด Leaderboard จริง
+    const fetchLeaderboard = async () => {
+        try {
+            const res = await axios.get('http://localhost:5000/api/user/leaderboard');
+            setLeaderboardData(res.data);
+            setShowLeaderboard(true);
+        } catch (err) {
+            console.error("Leaderboard Error:", err);
+            alert("ไม่สามารถโหลดข้อมูลอันดับได้");
+        }
+    };
 
     // ✅ 1. เช็คสถานะตอนโหลดหน้าเว็บ
     useEffect(() => {
@@ -40,7 +54,7 @@ function Home() {
                 <div style={styles.logo}>🏇 UMA CARD BATTLE</div>
                 <div style={styles.navLinks}>
                     <span style={styles.link} onClick={() => navigate('/wiki')}>Wiki</span>
-                    <span style={styles.link}>Leaderboard</span>
+                    <span style={styles.link} onClick={fetchLeaderboard}>Leaderboard</span>
                     
                     {/* ✅ 3. เงื่อนไขเปลี่ยนปุ่ม Login / Logout */}
                     {isLoggedIn ? (
@@ -53,6 +67,41 @@ function Home() {
                     )}
                 </div>
             </nav>
+
+            {/* 🏆 Leaderboard Modal */}
+            {showLeaderboard && (
+                <div style={styles.modalOverlay} onClick={() => setShowLeaderboard(false)}>
+                    <div style={styles.leaderboardBox} onClick={e => e.stopPropagation()}>
+                        <div style={styles.modalHeader}>
+                            <h2 style={{margin:0, color:'#e91e63'}}>🏆 GLOBAL RANKING</h2>
+                            <button onClick={() => setShowLeaderboard(false)} style={styles.closeBtn}>✕</button>
+                        </div>
+                        <div style={styles.rankingList}>
+                            {leaderboardData.length > 0 ? leaderboardData.map((user, index) => (
+                                <div key={user._id} style={{
+                                    ...styles.rankItem,
+                                    background: index < 3 ? 'rgba(233,30,99,0.1)' : '#2a2a2a',
+                                    border: index === 0 ? '1px solid gold' : '1px solid #444'
+                                }}>
+                                    <div style={{display:'flex', alignItems:'center', gap:'15px'}}>
+                                        <span style={{fontSize:'1.2rem', fontWeight:'bold', width:'30px'}}>{index + 1}</span>
+                                        <span style={{fontSize:'1.5rem'}}>
+                                            {index === 0 ? "🥇" : index === 1 ? "🥈" : index === 2 ? "🥉" : "🐎"}
+                                        </span>
+                                        <span style={{fontWeight:'bold'}}>{user.username}</span>
+                                    </div>
+                                    <div style={{color:'#e91e63', fontWeight:'bold'}}>{user.wins || 0} Wins</div>
+                                </div>
+                            )) : (
+                                <div style={{textAlign:'center', color:'#777', padding:'20px'}}>ยังไม่มีข้อมูลการแข่งขัน</div>
+                            )}
+                        </div>
+                        <div style={{textAlign:'center', marginTop:'20px', color:'#777', fontSize:'0.8rem'}}>
+                            * ข้อมูลแบบ Real-time จากฐานข้อมูล
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Hero Section */}
             <header style={styles.hero}>
@@ -81,9 +130,33 @@ function Home() {
                 
                 {/* Hero Image */}
                 <div style={styles.heroImageOverlay}>
-                    <img src="https://placehold.co/600x400/transparent/white?text=Anime+Horse+Art" alt="Hero" style={styles.heroImg} />
+                    {/* ✅ เปลี่ยนเป็นไฟล์ GIF และใส่ Animation นิดหน่อยให้ดูมีชีวิตชีวา */}
+                    <img 
+                        src="/images/home_hero.gif" 
+                        alt="Hero GIF" 
+                        className="floating-horse"
+                        style={styles.heroImg} 
+                        onError={(e) => {
+                            e.target.src = "https://placehold.co/600x400/transparent/white?text=Anime+Horse+Art";
+                            console.log("Gif not found, using placeholder");
+                        }}
+                    />
                 </div>
             </header>
+
+            {/* ✅ เพิ่ม Keyframes สำหรับท่าเต้น/ลอยตัว */}
+            <style>
+                {`
+                @keyframes floating {
+                    0% { transform: translateY(0px); }
+                    50% { transform: translateY(-20px); }
+                    100% { transform: translateY(0px); }
+                }
+                .floating-horse {
+                    animation: floating 3s ease-in-out infinite;
+                }
+                `}
+            </style>
 
             {/* Features */}
             <section style={styles.featuresSection}>
@@ -137,7 +210,15 @@ const styles = {
     cardIcon: { fontSize: '3rem', marginBottom: '20px' },
     cardTitle: { fontSize: '1.5rem', marginBottom: '15px' },
     cardDesc: { color: '#aaa', lineHeight: '1.5' },
-    footer: { padding: '30px', textAlign: 'center', color: '#555', fontSize: '0.9rem', borderTop: '1px solid #222' }
+    footer: { padding: '30px', textAlign: 'center', color: '#555', fontSize: '0.9rem', borderTop: '1px solid #222' },
+
+    // 🏆 Leaderboard Styles
+    modalOverlay: { position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.85)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000, backdropFilter: 'blur(5px)' },
+    leaderboardBox: { width: '500px', background: '#1e1e1e', borderRadius: '20px', padding: '30px', border: '1px solid #333', boxShadow: '0 20px 50px rgba(0,0,0,0.5)', animation: 'scaleUp 0.3s ease-out' },
+    modalHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', borderBottom: '1px solid #333', paddingBottom: '15px' },
+    closeBtn: { background: 'none', border: 'none', color: '#777', fontSize: '1.5rem', cursor: 'pointer', ':hover': { color: 'white' } },
+    rankingList: { display: 'flex', flexDirection: 'column', gap: '10px', maxHeight: '400px', overflowY: 'auto', paddingRight: '5px' },
+    rankItem: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '15px 20px', borderRadius: '12px', transition: '0.2s' }
 };
 
 export default Home;

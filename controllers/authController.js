@@ -1,22 +1,39 @@
+// 📌 ส่วนจัดการการยืนยันตัวตน (Authentication)
 const User = require('../models/User');
 const jwt = require('jsonwebtoken');
 
-// 1. สมัครสมาชิก (ไม่ต้อง Hash เองแล้ว ให้ Model ทำ)
+// คีย์ลับสำหรับถอดรหัส Token (ต้องตรงกับ Middleware)
+const JWT_SECRET = 'mysecretkey123';
+
+/**
+ * 📝 ฟังก์ชันสมัครสมาชิก (Register)
+ * 1. รับข้อมูล Username/Password
+ * 2. ตรวจสอบว่าชื่อซ้ำหรือไม่
+ * 3. บันทึกผู้ใช้ใหม่ลงฐานข้อมูล (มีการแจกเหรียญเริ่มต้น 1000 Coins)
+ */
 exports.register = async (req, res) => {
     try {
         const { username, password } = req.body;
         console.log("📝 Register Request:", username);
+
+        if (!username || !password) {
+            return res.status(400).json({ message: "กรุณากรอกข้อมูลให้ครบครับ" });
+        }
 
         const existingUser = await User.findOne({ username });
         if (existingUser) {
             return res.status(400).json({ message: "ชื่อผู้ใช้นี้มีคนใช้แล้วครับ" });
         }
 
+        // สร้าง Object ผู้ใช้ใหม่ (รหัสผ่านจะถูก Hash ที่ระดับ Model)
         const newUser = new User({ 
             username, 
             password, 
-            coins: 500,
-            decks: [] 
+            coins: 1000,
+            isAdmin: false,
+            inventory: [],
+            decks: [],
+            savedDecks: []
         });
         
         await newUser.save();
@@ -29,7 +46,11 @@ exports.register = async (req, res) => {
     }
 };
 
-// 2. ล็อกอิน
+/**
+ * 🔑 ฟังก์ชันเข้าสู่ระบบ (Login)
+ * 1. ตรวจสอบชื่อผู้ใช้และรหัสผ่าน
+ * 2. หากถูกต้อง จะสร้าง JWT Token เพื่อใช้ระบุตัวตนใน Request ต่อไป
+ */
 exports.login = async (req, res) => {
     try {
         const { username, password } = req.body;
@@ -41,20 +62,33 @@ exports.login = async (req, res) => {
             return res.status(400).json({ message: "ไม่พบชื่อผู้ใช้นี้ครับ" });
         }
 
-        // ใช้ method ที่เราเขียนไว้ใน User Model
-        const isMatch = await user.comparePassword(password);
+        let isMatch = false;
+        // ตรวจสอบรหัสผ่าน (รองรับทั้ง Plain Text และ Bcrypt)
+        if (user.password === password) {
+            isMatch = true;
+        } else {
+            isMatch = await user.comparePassword(password);
+        }
+
         if (!isMatch) {
             console.log("❌ Login Fail: Wrong Password");
             return res.status(400).json({ message: "รหัสผ่านไม่ถูกต้องครับ" });
         }
 
+        // สร้าง JWT Token อายุ 1 วัน
         const token = jwt.sign(
             { userId: user._id, username: user.username }, 
-            'secret', 
-            { expiresIn: '1h' }
+            JWT_SECRET, 
+            { expiresIn: '1d' }
         );
+
         console.log("✅ Login Success:", username);
-        res.json({ token, username: user.username, coins: user.coins });
+        res.json({ 
+            token, 
+            username: user.username, 
+            isAdmin: user.isAdmin,
+            coins: user.coins 
+        });
 
     } catch (error) {
         console.error("❌ Login Error:", error);
@@ -62,25 +96,29 @@ exports.login = async (req, res) => {
     }
 };
 
-// 3. ดึงข้อมูลโปรไฟล์ (ตัวปัญหา!)
+/**
+ * 👤 ฟังก์ชันดึงข้อมูลโปรไฟล์ (Get Profile)
+ * 1. ตรวจสอบความถูกต้องของ Token ผ่าน Middleware
+ * 2. ดึงข้อมูลผู้ใช้พร้อมรายการไอเทมใน Inventory และทีมที่จัดไว้
+ */
 exports.getProfile = async (req, res) => {
     try {
-        // Log ดูซิว่า Middleware ส่งอะไรมาให้เรา
         console.log("👤 Get Profile Requested by UserID:", req.user?.userId);
 
         if (!req.user || !req.user.userId) {
-            console.log("❌ Error: No User ID in Request");
             return res.status(400).json({ message: "Token Invalid: No User ID found" });
         }
 
-        const user = await User.findById(req.user.userId).select('-password');
+        // ดึงข้อมูลผู้ใช้ (ตัดรหัสผ่านออก) และนำ ID การ์ดไปแปลงเป็นข้อมูลการ์ดจริง (Populate)
+        const user = await User.findById(req.user.userId)
+            .select('-password')
+            .populate('inventory.cardId')
+            .populate('savedDecks.cards');
         
         if (!user) {
-            console.log("❌ Error: User Not Found in DB (ID:", req.user.userId, ")");
             return res.status(404).json({ message: "User not found in Database" });
         }
 
-        console.log("✅ Profile Found:", user.username);
         res.json(user);
 
     } catch (error) {

@@ -38,6 +38,20 @@ router.post('/set-team', authenticateUser, async (req, res) => {
     }
 });
 
+// 🏆 Leaderboard (ดึงอันดับโลก)
+router.get('/leaderboard', async (req, res) => {
+    try {
+        const topPlayers = await User.find()
+            .select('username wins') // ดึงแค่ชื่อและจำนวนที่ชนะ
+            .sort({ wins: -1 })      // เรียงจากชนะมากไปน้อย
+            .limit(10);             // เอาแค่ 10 อันดับแรก
+        
+        res.json(topPlayers);
+    } catch (error) {
+        res.status(500).json({ message: "Error fetching leaderboard" });
+    }
+});
+
 router.get('/wiki-cards', async (req, res) => {
     try {
         // ดึงเฉพาะ Type = HORSE และเรียงตามชื่อ

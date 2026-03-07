@@ -1,25 +1,27 @@
+// 📇 ส่วนจัดการข้อมูลการ์ด (Card Management)
 const Card = require('../models/card');
 
-
-// ... (ฟังก์ชัน seedDatabase อันเดิม อยู่ด้านบน) ...
-
-// [เพิ่มใหม่] ฟังก์ชันดึงการ์ดทั้งหมด
+/**
+ * 🔍 ฟังก์ชันดึงรายการการ์ดทั้งหมด (Get All Cards)
+ * ใช้สำหรับแสดงรายการการ์ดที่มีทั้งหมดในระบบ (เช่น ในหน้า Wiki)
+ */
 exports.getCards = async (req, res) => {
   try {
-    const cards = await Card.find(); // คำสั่งศักดิ์สิทธิ์: ไปหาการ์ดมาให้หมด!
+    const cards = await Card.find();
     res.json(cards);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 };
 
-
-// ฟังก์ชันสำหรับ Reset และใส่ข้อมูลการ์ดใหม่ (Seed)
+/**
+ * 🌱 ฟังก์ชันตั้งค่าข้อมูลเริ่มต้น (Seed Database)
+ * ใช้สำหรับลบข้อมูลการ์ดเก่าและสร้างข้อมูลการ์ดพื้นฐานขึ้นมาใหม่ (ม้า และ การ์ดฝึก)
+ */
 exports.seedDatabase = async (req, res) => {
   try {
-    // 1. ข้อมูลการ์ดที่จะใส่ (3 ม้า, 3 การ์ดฝึก)
+    // ข้อมูลเริ่มต้นสำหรับทดสอบระบบ
     const initialCards = [
-      // --- การ์ดม้า (Horse) ---
       {
         name: "Silent Suzuka",
         type: "HORSE",
@@ -41,7 +43,6 @@ exports.seedDatabase = async (req, res) => {
         stats: { speed: 5, stamina: 9 },
         skill: { type: "DEBUFF_OPPONENT", value: -2 }
       },
-      // --- การ์ดฝึก (Training) ---
       {
         name: "วิ่งลากยาง",
         type: "TRAINING",
@@ -62,13 +63,10 @@ exports.seedDatabase = async (req, res) => {
       }
     ];
 
-    // 2. ลบข้อมูลเก่าทิ้งก่อน (เพื่อไม่ให้ซ้ำ)
+    // ล้างข้อมูลเดิมและเพิ่มข้อมูลใหม่ (Batch Insert)
     await Card.deleteMany({});
-    
-    // 3. เพิ่มข้อมูลใหม่ลงไป
     await Card.insertMany(initialCards);
 
-    // 4. แจ้งกลับว่าเสร็จแล้ว
     res.json({ 
         message: "✅ Seed Data สำเร็จ! เพิ่มการ์ดลง Database เรียบร้อย", 
         count: initialCards.length 
